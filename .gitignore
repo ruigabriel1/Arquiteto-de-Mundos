@@ -89,6 +89,36 @@ htmlcov/
 *.orig
 *.tmp
 
+# Railway specific ignores
+.railway/
+
+# Large development files
+*.sqlite3
+*.db
+
+# Virtual environments (ensure all are ignored)
+venv/
+.venv/
+env/
+.env/
+
+# Development scripts
+test_*.py
+create_*.py
+start_server.*
+restart_server.*
+*.ps1
+*.bat
+*.sh
+
+# Documentation that doesn't need to be deployed
+QUICKSTART.md
+TECHNICAL_SPECS.md
+DEPLOY_*.md
+*.txt
+!requirements.txt
+!runtime.txt
+
 # Documentation builds
 docs/_build/
 
