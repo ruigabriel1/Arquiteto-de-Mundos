@@ -29,23 +29,22 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    'rest_framework',
-    'channels',
-    # TODO: Adicionar quando instalar dependências
-    # 'corsheaders',
-    # 'django_celery_beat',
+    # Temporariamente desabilitado para debug
+    # 'rest_framework',
+    # 'channels',
 ]
 
 LOCAL_APPS = [
-    'usuarios',
-    'personagens',
-    'campanhas',
-    'sessoes',
-    'chat',
-    'ia_gm',
-    'sistema_unificado',
-    'rolagem',
-    'mensagens',
+    # Temporariamente desabilitado para debug
+    # 'usuarios',
+    # 'personagens',
+    # 'campanhas',
+    # 'sessoes',
+    # 'chat',
+    # 'ia_gm',
+    # 'sistema_unificado',
+    # 'rolagem',
+    # 'mensagens',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -210,8 +209,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom User Model
-AUTH_USER_MODEL = 'usuarios.Usuario'
+# Custom User Model - temporariamente desabilitado
+# AUTH_USER_MODEL = 'usuarios.Usuario'
 
 # Authentication Settings
 LOGIN_URL = '/login/'

@@ -16,28 +16,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from .views import api_root, index, dashboard_view
+from django.http import JsonResponse
+from django.shortcuts import render
+
+def home(request):
+    return JsonResponse({
+        'message': 'Unified Chronicles - Arquiteto de Mundos',
+        'status': 'online',
+        'version': '1.0.0'
+    })
+
+def health_check(request):
+    return JsonResponse({'status': 'healthy'})
 
 urlpatterns = [
-    # Sistema de usuários - interface web principal
-    path('', include('usuarios.web_urls', namespace='usuarios')),
-    
-    # API e Admin
-    path('api/', api_root, name='api_root'),
+    path('', home, name='home'),
+    path('health/', health_check, name='health'),
     path('admin/', admin.site.urls),
-    
-    # API REST endpoints
-    path('api/auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('api/usuarios/', include('usuarios.urls')),
-    # path('api/campanhas/', include('campanhas.api_urls')),  # API REST será implementada posteriormente
-    path('api/personagens/', include('personagens.urls')),
-    path('api/rolagem/', include('rolagem.urls')),
-    path('api/mensagens/', include('mensagens.urls')),
-    
-    # Templates web interface
-    path('personagens/', include('personagens.template_urls')),
-    path('campanhas/', include('campanhas.urls')),
-    
-    # Arquiteto de Mundos - IA Game Master
-    path('arquiteto/', include('ia_gm.urls')),
+    path('api/', home, name='api_root'),
 ]
