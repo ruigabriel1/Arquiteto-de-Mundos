@@ -318,7 +318,7 @@ def api_registrar_evento(request: HttpRequest) -> JsonResponse:
             descricao=evento,
             categoria='DECISAO',
             impacto_narrativo=f"Evento de importância {importancia}",
-            importancia=min(importancia, 5),  # Máx 5
+            importancia=min(importancia, 5),
             data_evento=timezone.now()
         )
         

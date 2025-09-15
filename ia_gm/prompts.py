@@ -491,7 +491,7 @@ class PromptGenerator:
         return f"""
         {ArquitetoDeMundosPrompts.get_sistema_base(
             contexto.get('estilo', EstiloNarrativo.EPICO),
-            contexto.get('criatividade', 8),  # Criatividade alta para estas situações
+            contexto.get('criatividade', 8),
             contexto.get('dificuldade', 5)
         )}
         
