@@ -1,8 +1,8 @@
-# 🎭 Unified Chronicles
+# 🏛️ Arquiteto de Mundos
 
 **Plataforma Completa de RPG Online com IA Game Master**
 
-![Status](https://img.shields.io/badge/Status-Produ%C3%A7%C3%A3o-brightgreen)
+![Status](https://img.shields.io/badge/Status-Pronto-brightgreen)
 ![Django](https://img.shields.io/badge/Django-4.2.7-blue)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![IA](https://img.shields.io/badge/IA-GPT%2BClaude-orange)
@@ -33,11 +33,11 @@ python manage.py runserver
 ### 📍 **URLs Importantes**
 - **Sistema Principal:** http://localhost:8000/
 - **Painel Admin:** http://localhost:8000/admin/
-- **IA Game Master:** http://localhost:8000/arquiteto/
+- **IA Game Master:** http://localhost:8000/ia-gm/
 
 ---
 
-## 🎯 **O que é o Unified Chronicles?**
+## 🎯 **O que é o Arquiteto de Mundos?**
 
 Uma **plataforma web revolucionária** que combina:
 
@@ -99,7 +99,7 @@ Frontend (Bootstrap + JS) ←→ Django Backend ←→ SQLite/PostgreSQL
 
 ### 🚀 **Como Usar**
 
-1. **Acesse:** http://localhost:8000/arquiteto/
+1. **Acesse:** http://localhost:8000/ia-gm/
 2. **Selecione** uma campanha sua
 3. **Crie** uma sessão de IA
 4. **Configure** estilo, criatividade, dificuldade
@@ -184,7 +184,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 ### **Deploy em Produção**
 ```bash
 # 1. Clone o projeto
-git clone <repositorio>
+git clone https://github.com/ruigabriel1/Arquiteto-de-Mundos.git
 cd unified_chronicles
 
 # 2. Instale dependências
@@ -256,7 +256,7 @@ python ia_gm/test_master_rules.py
 
 ## ❤️ **Sobre o Projeto**
 
-O **Unified Chronicles** foi desenvolvido para a **comunidade RPG brasileira**, oferecendo uma experiência completa de RPG online com tecnologia de ponta e IA inteligente.
+O **Arquiteto de Mundos** foi desenvolvido especialmente para a **comunidade RPG brasileira**, oferecendo uma experiência completa de RPG online com tecnologia de ponta e inteligência artificial verdadeiramente útil.
 
 **Características Únicas:**
 - 🇧🇷 **Totalmente em Português** - Interface e conteúdo
@@ -268,7 +268,7 @@ O **Unified Chronicles** foi desenvolvido para a **comunidade RPG brasileira**, 
 
 ## 🏁 **Conclusão**
 
-O **Unified Chronicles está 100% funcional** e pronto para uso. É uma plataforma completa que revoluciona a forma como jogamos RPG online.
+O **Arquiteto de Mundos está 100% funcional** e pronto para uso. É uma plataforma completa que revoluciona a forma como jogamos RPG online.
 
 **Comece sua aventura agora mesmo!** 🎲⚔️
 
