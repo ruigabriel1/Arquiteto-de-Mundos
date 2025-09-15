@@ -93,35 +93,19 @@ DATABASES = {
     'default': dj_database_url.parse(DATABASE_URL)
 }
 
-# Redis Configuration
-REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
+# Redis Configuration - desabilitado para versão simples
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 
-# Channels Configuration
-# Use Redis se disponível, senão use in-memory para desenvolvimento
-try:
-    import redis
-    redis_client = redis.from_url(REDIS_URL)
-    redis_client.ping()
-    # Redis está disponível
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                'hosts': [REDIS_URL],
-            },
-        },
-    }
-except:
-    # Redis não disponível, usar InMemoryChannelLayer
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        },
-    }
+# Channels Configuration - desabilitado para versão simples
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
-# Celery Configuration
-CELERY_BROKER_URL = config('CELERY_BROKER_URL', default=REDIS_URL)
-CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default=REDIS_URL)
+# Celery Configuration - desabilitado para versão simples
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -161,13 +145,9 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000',
-    cast=lambda v: [s.strip() for s in v.split(',')]
-)
+# CORS Configuration - desabilitado para versão simples
+CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -216,43 +196,39 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
-# AI API Configuration
-OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
-OPENAI_MODELO = config('OPENAI_MODELO', default='gpt-4')
+# AI API Configuration - desabilitado para versão simples
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+OPENAI_MODELO = os.environ.get('OPENAI_MODELO', 'gpt-4')
 
-ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
-ANTHROPIC_MODELO = config('ANTHROPIC_MODELO', default='claude-3-sonnet-20240229')
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+ANTHROPIC_MODELO = os.environ.get('ANTHROPIC_MODELO', 'claude-3-sonnet-20240229')
 
 # Para geração de imagens
-DALLE_API_KEY = config('DALLE_API_KEY', default='')
+DALLE_API_KEY = os.environ.get('DALLE_API_KEY', '')
 
 # Modelo local (Ollama, LM Studio, etc.) - opcional
-LOCAL_AI_URL = config('LOCAL_AI_URL', default='')
-LOCAL_AI_MODELO = config('LOCAL_AI_MODELO', default='llama2')
-LOCAL_AI_API_KEY = config('LOCAL_AI_API_KEY', default='')
+LOCAL_AI_URL = os.environ.get('LOCAL_AI_URL', '')
+LOCAL_AI_MODELO = os.environ.get('LOCAL_AI_MODELO', 'llama2')
+LOCAL_AI_API_KEY = os.environ.get('LOCAL_AI_API_KEY', '')
 
 # Configurações de IA GM
-IA_GM_CACHE_TIMEOUT = config('IA_GM_CACHE_TIMEOUT', default=3600, cast=int)  # 1 hora
-IA_GM_MAX_TOKENS = config('IA_GM_MAX_TOKENS', default=2000, cast=int)
-IA_GM_TEMPERATURE = config('IA_GM_TEMPERATURE', default=0.8, cast=float)
-IA_GM_MAX_RETRIES = config('IA_GM_MAX_RETRIES', default=3, cast=int)
+IA_GM_CACHE_TIMEOUT = int(os.environ.get('IA_GM_CACHE_TIMEOUT', '3600'))
+IA_GM_MAX_TOKENS = int(os.environ.get('IA_GM_MAX_TOKENS', '2000'))
+IA_GM_TEMPERATURE = float(os.environ.get('IA_GM_TEMPERATURE', '0.8'))
+IA_GM_MAX_RETRIES = int(os.environ.get('IA_GM_MAX_RETRIES', '3'))
 
 # Upload Settings
-MAX_UPLOAD_SIZE = config('MAX_UPLOAD_SIZE', default=10485760, cast=int)  # 10MB
-ALLOWED_EXTENSIONS = config(
-    'ALLOWED_EXTENSIONS',
-    default='jpg,jpeg,png,gif,pdf',
-    cast=lambda v: [s.strip() for s in v.split(',')]
-)
+MAX_UPLOAD_SIZE = int(os.environ.get('MAX_UPLOAD_SIZE', '10485760'))  # 10MB
+ALLOWED_EXTENSIONS = os.environ.get('ALLOWED_EXTENSIONS', 'jpg,jpeg,png,gif,pdf').split(',')
 
 # Security Settings
 if not DEBUG:
-    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
-    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
-    SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
-    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
-    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True') == 'True'
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'True') == 'True'
+    SECURE_HSTS_PRELOAD = os.environ.get('SECURE_HSTS_PRELOAD', 'True') == 'True'
+    SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'True') == 'True'
+    CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'True') == 'True'
 
 # Logging Configuration
 # Configuração que funciona tanto em desenvolvimento (com arquivo) quanto em produção (apenas console)
