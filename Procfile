@@ -1,1 +1,2 @@
-web: gunicorn unified_chronicles.wsgi:application --host 0.0.0.0 --port $PORT
+release: bash release.sh
+web: gunicorn unified_chronicles.wsgi:application --bind 0.0.0.0:$PORT
