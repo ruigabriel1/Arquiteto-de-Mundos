@@ -1,0 +1,62 @@
+# Railway Ignore - Arquivos que não devem ser enviados para o deploy
+
+# Development files
+*.sqlite3
+*.db
+db.sqlite3*
+test_*.py
+create_*.py
+start_server.*
+restart_server.*
+*.ps1
+*.bat
+*.sh
+
+# Documentation
+README.md
+QUICKSTART.md
+TECHNICAL_SPECS.md
+DEPLOY_*.md
+*.txt
+!requirements.txt
+!runtime.txt
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDE/Editors
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Logs and temporary files
+logs/
+*.log
+*.tmp
+*.bak
+
+# Test files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Development media
+media/
+staticfiles/
+
+# Docker development
+docker-compose.yml
+Dockerfile
+
+# Development scripts
+scripts/
