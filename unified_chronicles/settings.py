@@ -54,6 +54,7 @@ MIDDLEWARE = [
     # TODO: Adicionar quando instalar corsheaders
     # 'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -84,28 +85,15 @@ WSGI_APPLICATION = 'unified_chronicles.wsgi.application'
 ASGI_APPLICATION = 'unified_chronicles.asgi.application'
 
 # Database
-# Para desenvolvimento, use PostgreSQL se disponível, senão SQLite
+# Usar dj-database-url para configuração automática no Railway
+import dj_database_url
+
 default_db_url = f'sqlite:///{BASE_DIR}/db.sqlite3'
 DATABASE_URL = config('DATABASE_URL', default=default_db_url)
 
-if DATABASE_URL.startswith('postgresql'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='unified_chronicles'),
-            'USER': config('DB_USER', default='uc_user'),
-            'PASSWORD': config('DB_PASSWORD', default='uc_password'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+DATABASES = {
+    'default': dj_database_url.parse(DATABASE_URL)
+}
 
 # Redis Configuration
 REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
@@ -211,6 +199,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# WhiteNoise configuration
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'

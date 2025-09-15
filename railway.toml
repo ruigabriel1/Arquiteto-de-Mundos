@@ -1,30 +1,5 @@
 [build]
 builder = "nixpacks"
 
-[build.buildCommand]
-command = "python manage.py collectstatic --noinput"
-
-# Configurações de timeout otimizadas
-[build.watchPatterns]
-patterns = ["**/*.py", "requirements.txt", "railway.toml"]
-
 [deploy]
-startCommand = "python manage.py migrate --noinput && gunicorn unified_chronicles.wsgi --log-file - --bind 0.0.0.0:$PORT --timeout 120 --workers 2"
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3
-
-[deploy.healthcheckPath]
-path = "/"
-
-[deploy.healthcheckTimeout]
-timeout = 300
-
-# Aumentar timeout para snapshot
-[snapshot]
-timeout = 600
-
-[env]
-PYTHONPATH = "/app:$PYTHONPATH"
-DJANGO_SETTINGS_MODULE = "unified_chronicles.settings"
-PYTHONUNBUFFERED = "1"
-PYTHONDONTWRITEBYTECODE = "1"
+startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn unified_chronicles.wsgi --bind 0.0.0.0:$PORT"
