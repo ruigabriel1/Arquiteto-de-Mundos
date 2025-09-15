@@ -1,0 +1,233 @@
+{% extends "usuarios/base_usuarios.html" %}
+
+{% block title %}Unified Chronicles - RPG Virtual com IA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row min-vh-100">
+        <!-- Hero Section -->
+        <div class="col-12">
+            <div class="text-center py-5">
+                <div class="mb-5">
+                    <h1 class="display-3 fw-bold text-white mb-4">
+                        <i class="fas fa-dice-d20 text-primary me-3"></i>
+                        Unified Chronicles
+                    </h1>
+                    <p class="lead text-light mb-4">
+                        A plataforma definitiva de RPG virtual com <strong>IA Game Master</strong>
+                    </p>
+                    <p class="text-light opacity-75 mb-5">
+                        Combine D&D 5e e Tormenta20 em aventuras épicas narradas por inteligência artificial
+                    </p>
+                </div>
+                
+                <!-- Call to Action -->
+                <div class="row justify-content-center">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="d-grid gap-3">
+                            <a href="{% url 'usuarios:cadastro' %}" class="btn btn-auth btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>
+                                Criar Conta Grátis
+                            </a>
+                            <a href="{% url 'usuarios:login' %}" class="btn-secondary-auth">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                Já tenho uma conta
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Features Section -->
+        <div class="col-12 py-5">
+            <div class="container">
+                <h2 class="text-center text-white mb-5">
+                    <i class="fas fa-star text-warning me-2"></i>
+                    Por que escolher o Unified Chronicles?
+                </h2>
+                
+                <div class="row g-4">
+                    <!-- Feature 1: IA GM -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="dashboard-card h-100 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-robot fa-3x text-primary"></i>
+                            </div>
+                            <h4 class="text-white mb-3">Arquiteto de Mundos</h4>
+                            <p class="text-light opacity-75">
+                                IA Game Master que nunca diz "não" - filosofia "Sim, e..." para 
+                                aventuras infinitamente criativas e envolventes.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature 2: Sistema Unificado -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="dashboard-card h-100 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-layer-group fa-3x text-success"></i>
+                            </div>
+                            <h4 class="text-white mb-3">Sistema Unificado</h4>
+                            <p class="text-light opacity-75">
+                                Combine D&D 5e e Tormenta20 em uma única experiência. 
+                                Personagens, classes e regras harmonizadas.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature 3: Chat em Tempo Real -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="dashboard-card h-100 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-comments fa-3x text-info"></i>
+                            </div>
+                            <h4 class="text-white mb-3">Chat em Tempo Real</h4>
+                            <p class="text-light opacity-75">
+                                Interface moderna de chat com comandos especiais, 
+                                rolagem de dados e comunicação fluida.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature 4: Fichas Digitais -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="dashboard-card h-100 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-scroll fa-3x text-warning"></i>
+                            </div>
+                            <h4 class="text-white mb-3">Fichas Inteligentes</h4>
+                            <p class="text-light opacity-75">
+                                Criação automatizada de personagens, cálculos 
+                                automáticos e progressão dinâmica.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature 5: Português -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="dashboard-card h-100 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-flag fa-3x text-success"></i>
+                            </div>
+                            <h4 class="text-white mb-3">Totalmente em Português</h4>
+                            <p class="text-light opacity-75">
+                                Interface, IA e todo conteúdo em português brasileiro. 
+                                RPG acessível para nossa comunidade.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature 6: Gratuito -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="dashboard-card h-100 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-heart fa-3x text-danger"></i>
+                            </div>
+                            <h4 class="text-white mb-3">Gratuito & Open Source</h4>
+                            <p class="text-light opacity-75">
+                                Plataforma completamente gratuita, desenvolvida 
+                                pela comunidade para a comunidade de RPG.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- How it Works Section -->
+        <div class="col-12 py-5 bg-dark bg-opacity-25">
+            <div class="container">
+                <h2 class="text-center text-white mb-5">
+                    <i class="fas fa-cogs text-primary me-2"></i>
+                    Como Funciona
+                </h2>
+                
+                <div class="row g-4 justify-content-center">
+                    <!-- Step 1 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="text-center">
+                            <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                 style="width: 60px; height: 60px;">
+                                <span class="fw-bold text-white fs-4">1</span>
+                            </div>
+                            <h5 class="text-white mb-3">Crie sua Conta</h5>
+                            <p class="text-light opacity-75">
+                                Cadastre-se gratuitamente e acesse seu dashboard personalizado
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="text-center">
+                            <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                 style="width: 60px; height: 60px;">
+                                <span class="fw-bold text-white fs-4">2</span>
+                            </div>
+                            <h5 class="text-white mb-3">Crie seu Personagem</h5>
+                            <p class="text-light opacity-75">
+                                Use nossas ferramentas para criar personagens únicos e balanceados
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="text-center">
+                            <div class="bg-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                 style="width: 60px; height: 60px;">
+                                <span class="fw-bold text-white fs-4">3</span>
+                            </div>
+                            <h5 class="text-white mb-3">Entre em uma Sessão</h5>
+                            <p class="text-light opacity-75">
+                                Junte-se a aventuras ou crie sua própria campanha
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="text-center">
+                            <div class="bg-danger rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                 style="width: 60px; height: 60px;">
+                                <span class="fw-bold text-white fs-4">4</span>
+                            </div>
+                            <h5 class="text-white mb-3">Aventure-se!</h5>
+                            <p class="text-light opacity-75">
+                                Deixe a IA GM criar aventuras épicas e memoráveis
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CTA Final -->
+        <div class="col-12 py-5">
+            <div class="text-center">
+                <h2 class="text-white mb-4">Pronto para Começar sua Aventura?</h2>
+                <p class="text-light opacity-75 mb-5">
+                    Junte-se a milhares de jogadores que já descobriram o futuro do RPG
+                </p>
+                
+                <div class="row justify-content-center">
+                    <div class="col-md-4">
+                        <a href="{% url 'usuarios:cadastro' %}" class="btn btn-auth btn-lg">
+                            <i class="fas fa-rocket me-2"></i>
+                            Começar Agora
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <small class="text-light opacity-50">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        100% gratuito • Sem cartão de crédito • Comece em menos de 2 minutos
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

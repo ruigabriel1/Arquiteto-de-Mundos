@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Minhas Campanhas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .campaign-card {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .campaign-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-color: #007bff;
+    }
+    .campaign-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-ativo {
+        background-color: #28a745;
+        color: white;
+    }
+    .status-planejamento {
+        background-color: #ffc107;
+        color: black;
+    }
+    .status-pausado {
+        background-color: #6c757d;
+        color: white;
+    }
+    .status-encerrado {
+        background-color: #dc3545;
+        color: white;
+    }
+    .participation-status {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-ativo-part {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .status-pendente {
+        background-color: #fd7e14;
+        color: white;
+    }
+    .status-aguardando {
+        background-color: #6f42c1;
+        color: white;
+    }
+    .role-badge {
+        background-color: #28a745;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+    .campaign-image {
+        height: 150px;
+        background: linear-gradient(45deg, #007bff, #6f42c1);
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        position: relative;
+    }
+    .character-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .nav-tabs .nav-link.active {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user"></i> Minhas Campanhas</h2>
+                <a href="{% url 'campanhas:publicas' %}" class="btn btn-primary">
+                    <i class="fas fa-globe"></i> Campanhas Públicas
+                </a>
+            </div>
+
+            <!-- Tabs de navegação -->
+            <ul class="nav nav-tabs mb-4" id="campanhasTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="participando-tab" data-bs-toggle="tab" 
+                            data-bs-target="#participando" type="button" role="tab">
+                        <i class="fas fa-users"></i> Participando ({{ participacoes.count }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="organizando-tab" data-bs-toggle="tab" 
+                            data-bs-target="#organizando" type="button" role="tab">
+                        <i class="fas fa-crown"></i> Organizando ({{ campanhas_organizadas.count }})
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Conteúdo das tabs -->
+            <div class="tab-content" id="campanhasTabContent">
+                <!-- Tab: Participando -->
+                <div class="tab-pane fade show active" id="participando" role="tabpanel">
+                    {% if participacoes %}
+                        <div class="row">
+                            {% for participacao in participacoes %}
+                                <div class="col-lg-4 col-md-6 mb-4">
+                                    <div class="card campaign-card position-relative h-100">
+                                        <!-- Imagem/Banner -->
+                                        <div class="campaign-image position-relative">
+                                            <i class="fas fa-dice-d20"></i>
+                                            
+                                            <!-- Status da campanha -->
+                                            <div class="campaign-status status-{{ participacao.campanha.estado }}">
+                                                {{ participacao.campanha.get_estado_display }}
+                                            </div>
+
+                                            <!-- Status de participação -->
+                                            <div class="participation-status status-{{ participacao.status }}-part">
+                                                {% if participacao.status == 'ativo' %}
+                                                    <i class="fas fa-check-circle"></i> Ativo
+                                                {% elif participacao.status == 'pendente' %}
+                                                    <i class="fas fa-clock"></i> Pendente
+                                                {% elif participacao.status == 'aguardando' %}
+                                                    <i class="fas fa-hourglass-half"></i> Aguardando
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title">{{ participacao.campanha.nome }}</h5>
+                                            <p class="text-muted mb-2">
+                                                <i class="fas fa-gamepad"></i> {{ participacao.campanha.sistema_jogo.nome }}
+                                            </p>
+                                            <p class="text-muted mb-2">
+                                                <i class="fas fa-user"></i> {{ participacao.campanha.organizador.nome_completo }}
+                                            </p>
+                                            
+                                            <!-- Informações do personagem -->
+                                            {% if participacao.personagem %}
+                                                <div class="character-info">
+                                                    <h6 class="mb-1">Meu Personagem:</h6>
+                                                    <p class="mb-1"><strong>{{ participacao.personagem.nome }}</strong></p>
+                                                    <p class="mb-1"><small>Nível {{ participacao.personagem.nivel }}</small></p>
+                                                    {% if participacao.personagem.classes %}
+                                                        <p class="mb-0"><small>
+                                                            {% for classe in participacao.personagem.classes %}
+                                                                {{ classe.nome }}{% if not forloop.last %}, {% endif %}
+                                                            {% endfor %}
+                                                        </small></p>
+                                                    {% endif %}
+                                                </div>
+                                            {% elif participacao.status == 'pendente' %}
+                                                <div class="alert alert-warning py-2">
+                                                    <small><i class="fas fa-exclamation-triangle"></i> Personagem não definido</small>
+                                                </div>
+                                            {% elif participacao.status == 'aguardando' %}
+                                                <div class="alert alert-info py-2">
+                                                    <small><i class="fas fa-clock"></i> Aguardando aprovação</small>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            <div class="mt-auto">
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-users"></i> 
+                                                        {{ participacao.campanha.participantes.count }}/{{ participacao.campanha.max_jogadores|default:"∞" }}
+                                                    </small>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar"></i>
+                                                        {{ participacao.data_participacao|date:"d/m/Y" }}
+                                                    </small>
+                                                </div>
+                                                
+                                                <a href="{% url 'campanhas:detalhes' participacao.campanha.id %}" 
+                                                   class="btn btn-primary w-100">
+                                                    <i class="fas fa-eye"></i> Ver Detalhes
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Você ainda não participa de nenhuma campanha</h4>
+                            <p class="text-muted">Explore as campanhas públicas e junte-se a aventuras épicas!</p>
+                            <a href="{% url 'campanhas:publicas' %}" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Buscar Campanhas
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Tab: Organizando -->
+                <div class="tab-pane fade" id="organizando" role="tabpanel">
+                    {% if campanhas_organizadas %}
+                        <div class="row">
+                            {% for campanha in campanhas_organizadas %}
+                                <div class="col-lg-4 col-md-6 mb-4">
+                                    <div class="card campaign-card position-relative h-100">
+                                        <!-- Imagem/Banner -->
+                                        <div class="campaign-image position-relative">
+                                            <i class="fas fa-dice-d20"></i>
+                                            
+                                            <!-- Status da campanha -->
+                                            <div class="campaign-status status-{{ campanha.estado }}">
+                                                {{ campanha.get_estado_display }}
+                                            </div>
+
+                                            <!-- Badge de organizador -->
+                                            <div class="participation-status role-badge">
+                                                <i class="fas fa-crown"></i> Organizador
+                                            </div>
+                                        </div>
+
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title">{{ campanha.nome }}</h5>
+                                            <p class="text-muted mb-2">
+                                                <i class="fas fa-gamepad"></i> {{ campanha.sistema_jogo.nome }}
+                                            </p>
+                                            <p class="text-muted mb-2">
+                                                <i class="fas fa-eye"></i> 
+                                                {% if campanha.publica %}Pública{% else %}Privada{% endif %}
+                                            </p>
+                                            
+                                            <p class="card-text flex-grow-1">
+                                                {{ campanha.descricao|truncatewords:15 }}
+                                            </p>
+                                            
+                                            <!-- Estatísticas -->
+                                            <div class="mb-3">
+                                                <div class="row text-center">
+                                                    <div class="col-4">
+                                                        <small class="text-muted d-block">Participantes</small>
+                                                        <strong>{{ campanha.participantes.count }}</strong>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <small class="text-muted d-block">Pendentes</small>
+                                                        <strong class="text-warning">
+                                                            {{ campanha.participantes_pendentes.count|default:0 }}
+                                                        </strong>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <small class="text-muted d-block">Aguardando</small>
+                                                        <strong class="text-info">
+                                                            {{ campanha.participantes_aguardando.count|default:0 }}
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-auto">
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar"></i>
+                                                        {{ campanha.data_criacao|date:"d/m/Y" }}
+                                                    </small>
+                                                    {% if campanha.data_inicio %}
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-play"></i>
+                                                            {{ campanha.data_inicio|date:"d/m/Y" }}
+                                                        </small>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div class="btn-group w-100" role="group">
+                                                    <a href="{% url 'campanhas:detalhes' campanha.id %}" 
+                                                       class="btn btn-outline-primary">
+                                                        <i class="fas fa-eye"></i> Ver
+                                                    </a>
+                                                    <a href="{% url 'campanhas:gerenciar' campanha.id %}" 
+                                                       class="btn btn-success">
+                                                        <i class="fas fa-cog"></i> Gerenciar
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-crown fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Você ainda não organiza nenhuma campanha</h4>
+                            <p class="text-muted">Que tal criar sua primeira campanha e ser o mestre da aventura?</p>
+                            <a href="{% url 'campanhas:criar' %}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Criar Campanha
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para as tabs -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ativar a tab correta baseada na URL hash
+    const hash = window.location.hash;
+    if (hash === '#organizando') {
+        const organizandoTab = new bootstrap.Tab(document.getElementById('organizando-tab'));
+        organizandoTab.show();
+    }
+    
+    // Atualizar URL hash quando a tab muda
+    const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabElements.forEach(function(tab) {
+        tab.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target').substring(1);
+            if (targetId === 'organizando') {
+                history.replaceState(null, null, '#organizando');
+            } else {
+                history.replaceState(null, null, window.location.pathname);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

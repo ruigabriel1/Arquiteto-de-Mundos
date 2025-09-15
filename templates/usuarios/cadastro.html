@@ -1,0 +1,165 @@
+{% extends "usuarios/base_usuarios.html" %}
+
+{% block title %}Criar Conta - Unified Chronicles{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>
+                <i class="fas fa-user-plus text-primary me-2"></i>
+                Criar Conta
+            </h1>
+            <p>Junte-se à comunidade do Unified Chronicles</p>
+        </div>
+        
+        <!-- Exibir mensagens de erro -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Nome de usuário -->
+            <div class="mb-3">
+                <div class="form-floating">
+                    <input type="text" 
+                           class="form-control" 
+                           id="username" 
+                           name="username" 
+                           placeholder="&nbsp;"
+                           value="{{ username|default:'' }}"
+                           required
+                           maxlength="150"
+                           pattern="^[a-zA-Z0-9_]+$"
+                           title="Apenas letras, números e underscores">
+                    <label for="username">
+                        <i class="fas fa-user me-2"></i>Nome de usuário
+                    </label>
+                </div>
+                <div class="form-text text-light opacity-75 small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Apenas letras, números e underscore. Mínimo 3 caracteres.
+                </div>
+            </div>
+            
+            <!-- Nome completo -->
+            <div class="mb-3">
+                <div class="form-floating">
+                    <input type="text" 
+                           class="form-control" 
+                           id="nome_completo" 
+                           name="nome_completo" 
+                           placeholder="&nbsp;"
+                           value="{{ nome_completo|default:'' }}"
+                           required
+                           maxlength="150">
+                    <label for="nome_completo">
+                        <i class="fas fa-id-card me-2"></i>Nome completo
+                    </label>
+                </div>
+                <div class="form-text text-light opacity-75 small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Este nome será exibido para outros jogadores.
+                </div>
+            </div>
+            
+            <!-- Senha -->
+            <div class="mb-3">
+                <div class="form-floating">
+                    <input type="password" 
+                           class="form-control" 
+                           id="password" 
+                           name="password" 
+                           placeholder="&nbsp;"
+                           required
+                           minlength="8">
+                    <label for="password">
+                        <i class="fas fa-lock me-2"></i>Senha
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Confirmar Senha -->
+            <div class="mb-3">
+                <div class="form-floating">
+                    <input type="password" 
+                           class="form-control" 
+                           id="password_confirm" 
+                           name="password_confirm" 
+                           placeholder="&nbsp;"
+                           required
+                           minlength="8">
+                    <label for="password_confirm">
+                        <i class="fas fa-lock me-2"></i>Confirmar senha
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Feedback de validação de senha -->
+            <div id="password-feedback" class="mb-3"></div>
+            
+            <!-- Termos de Uso -->
+            <div class="form-check mb-4">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       value="on" 
+                       id="termos" 
+                       name="termos"
+                       required>
+                <label class="form-check-label" for="termos">
+                    Concordo com os 
+                    <a href="#" class="text-primary">Termos de Uso</a> e 
+                    <a href="#" class="text-primary">Política de Privacidade</a>
+                </label>
+            </div>
+            
+            <!-- Botão de Cadastro -->
+            <button type="submit" class="btn btn-auth">
+                <i class="fas fa-user-plus me-2"></i>
+                Criar Minha Conta
+            </button>
+        </form>
+        
+        <!-- Links de navegação -->
+        <div class="auth-links">
+            <p class="mb-0">
+                Já tem uma conta?
+                <a href="{% url 'usuarios:login' %}">Fazer login</a>
+            </p>
+            <p class="mt-2 mb-0">
+                <a href="{% url 'usuarios:index' %}">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Voltar ao início
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Informações de Segurança -->
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="alert alert-info bg-dark bg-opacity-50 border-info">
+                <h6 class="alert-heading">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Sua segurança é nossa prioridade
+                </h6>
+                <small>
+                    • Suas senhas são criptografadas com algoritmos seguros<br>
+                    • Nunca compartilhamos seus dados pessoais<br>
+                    • Você pode excluir sua conta a qualquer momento<br>
+                    • Sistema 100% gratuito, sem pegadinhas
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

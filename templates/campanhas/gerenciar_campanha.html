@@ -1,0 +1,496 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar - {{ campanha.nome }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .participant-card {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    .participant-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .character-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .status-aguardando {
+        background-color: #6f42c1;
+        color: white;
+    }
+    .status-pendente {
+        background-color: #fd7e14;
+        color: white;
+    }
+    .status-ativo {
+        background-color: #28a745;
+        color: white;
+    }
+    .campaign-stats {
+        background: linear-gradient(45deg, #007bff, #6f42c1);
+        color: white;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+    }
+    .section-header {
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .btn-approve {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    .btn-approve:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+    .btn-reject {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    .btn-reject:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header e Estatísticas -->
+    <div class="campaign-stats">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2><i class="fas fa-crown"></i> Gerenciar Campanha</h2>
+                <h4>{{ campanha.nome }}</h4>
+                <p class="mb-0">
+                    <i class="fas fa-gamepad"></i> {{ campanha.sistema_jogo.nome }} • 
+                    <i class="fas fa-calendar"></i> {{ campanha.data_criacao|date:"d/m/Y" }}
+                </p>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-4">
+                        <div class="stat-card">
+                            <h3 class="mb-1">{{ participacoes_ativas.count }}</h3>
+                            <small>Ativos</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card">
+                            <h3 class="mb-1">{{ participacoes_pendentes.count }}</h3>
+                            <small>Pendentes</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card">
+                            <h3 class="mb-1">{{ participacoes_aguardando.count }}</h3>
+                            <small>Aguardando</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegação -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{% url 'campanhas:detalhes' campanha.id %}" class="btn btn-outline-primary">
+                    <i class="fas fa-eye"></i> Ver Campanha
+                </a>
+                <a href="{% url 'campanhas:minhas' %}#organizando" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Minhas Campanhas
+                </a>
+                <a href="#" class="btn btn-outline-info">
+                    <i class="fas fa-edit"></i> Editar Campanha
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Coluna principal -->
+        <div class="col-lg-8">
+            <!-- Participações aguardando aprovação -->
+            {% if participacoes_aguardando %}
+                <div class="card mb-4">
+                    <div class="card-header section-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-hourglass-half text-purple"></i> 
+                            Aguardando Aprovação ({{ participacoes_aguardando.count }})
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for participacao in participacoes_aguardando %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="participant-card p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="mb-1">{{ participacao.usuario.nome_completo }}</h6>
+                                                <span class="status-badge status-aguardando">
+                                                    <i class="fas fa-clock"></i> Aguardando
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">{{ participacao.data_participacao|date:"d/m/Y H:i" }}</small>
+                                        </div>
+
+                                        {% if participacao.personagem %}
+                                            <div class="character-info">
+                                                <h6>Personagem:</h6>
+                                                <p class="mb-1"><strong>{{ participacao.personagem.nome }}</strong></p>
+                                                <p class="mb-1">Nível {{ participacao.personagem.nivel }}</p>
+                                                {% if participacao.personagem.classes %}
+                                                    <p class="mb-0">
+                                                        {% for classe in participacao.personagem.classes %}
+                                                            {{ classe.nome }}{% if not forloop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <div class="alert alert-warning py-2 mb-2">
+                                                <small><i class="fas fa-exclamation-triangle"></i> Personagem não definido</small>
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="mt-3 btn-group w-100" role="group">
+                                            <form method="post" action="{% url 'campanhas:aprovar_participacao' participacao.id %}" class="flex-fill">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="campanha_id" value="{{ campanha.id }}">
+                                                <button type="submit" class="btn btn-approve w-100">
+                                                    <i class="fas fa-check"></i> Aprovar
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-reject" data-bs-toggle="modal" 
+                                                    data-bs-target="#rejeitarModal" data-participacao-id="{{ participacao.id }}"
+                                                    data-usuario-nome="{{ participacao.usuario.nome_completo }}">
+                                                <i class="fas fa-times"></i> Rejeitar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Participações pendentes (sem personagem) -->
+            {% if participacoes_pendentes %}
+                <div class="card mb-4">
+                    <div class="card-header section-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user-clock text-warning"></i> 
+                            Pendentes - Aguardando Personagem ({{ participacoes_pendentes.count }})
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for participacao in participacoes_pendentes %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="participant-card p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="mb-1">{{ participacao.usuario.nome_completo }}</h6>
+                                                <span class="status-badge status-pendente">
+                                                    <i class="fas fa-user-plus"></i> Pendente
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">{{ participacao.data_participacao|date:"d/m/Y H:i" }}</small>
+                                        </div>
+
+                                        <div class="alert alert-info py-2">
+                                            <small>
+                                                <i class="fas fa-info-circle"></i> 
+                                                Usuário precisa definir um personagem
+                                            </small>
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                Esta participação será automaticamente movida para "Aguardando Aprovação" 
+                                                quando o usuário definir um personagem.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Participantes ativos -->
+            <div class="card mb-4">
+                <div class="card-header section-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users text-success"></i> 
+                        Participantes Ativos ({{ participacoes_ativas.count }})
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if participacoes_ativas %}
+                        <div class="row">
+                            {% for participacao in participacoes_ativas %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="participant-card p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="mb-1">{{ participacao.usuario.nome_completo }}</h6>
+                                                <span class="status-badge status-ativo">
+                                                    <i class="fas fa-check-circle"></i> Ativo
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">{{ participacao.data_participacao|date:"d/m/Y" }}</small>
+                                        </div>
+
+                                        {% if participacao.personagem %}
+                                            <div class="character-info">
+                                                <h6>Personagem:</h6>
+                                                <p class="mb-1"><strong>{{ participacao.personagem.nome }}</strong></p>
+                                                <p class="mb-1">Nível {{ participacao.personagem.nivel }}</p>
+                                                {% if participacao.personagem.classes %}
+                                                    <p class="mb-0">
+                                                        {% for classe in participacao.personagem.classes %}
+                                                            {{ classe.nome }}{% if not forloop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                    data-bs-toggle="modal" data-bs-target="#removerModal"
+                                                    data-participacao-id="{{ participacao.id }}"
+                                                    data-usuario-nome="{{ participacao.usuario.nome_completo }}">
+                                                <i class="fas fa-user-minus"></i> Remover
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum participante ativo</h5>
+                            <p class="text-muted">Aguarde aprovações ou convide jogadores para sua campanha.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Informações da campanha -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Informações</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Estado:</strong> {{ campanha.get_estado_display }}</p>
+                    <p><strong>Sistema:</strong> {{ campanha.sistema_jogo.nome }}</p>
+                    <p><strong>Visibilidade:</strong> {% if campanha.publica %}Pública{% else %}Privada{% endif %}</p>
+                    <p><strong>Max Jogadores:</strong> {{ campanha.max_jogadores|default:"Ilimitado" }}</p>
+                    {% if campanha.data_inicio %}
+                        <p><strong>Início:</strong> {{ campanha.data_inicio|date:"d/m/Y" }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Ações rápidas -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-tools"></i> Ações Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-outline-primary w-100 mb-2" disabled>
+                        <i class="fas fa-user-plus"></i> Convidar Jogadores
+                    </button>
+                    <button class="btn btn-outline-info w-100 mb-2" disabled>
+                        <i class="fas fa-envelope"></i> Enviar Mensagem
+                    </button>
+                    <button class="btn btn-outline-warning w-100 mb-2" disabled>
+                        <i class="fas fa-edit"></i> Editar Campanha
+                    </button>
+                    <hr>
+                    <button class="btn btn-outline-danger w-100" disabled>
+                        <i class="fas fa-archive"></i> Arquivar Campanha
+                    </button>
+                    <small class="text-muted d-block mt-2">
+                        * Funcionalidades em desenvolvimento
+                    </small>
+                </div>
+            </div>
+
+            <!-- Atividade recente -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Atividade Recente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for participacao in participacoes_aguardando|slice:":3" %}
+                            <div class="timeline-item mb-3">
+                                <small class="text-muted">{{ participacao.data_participacao|timesince }} atrás</small>
+                                <p class="mb-0">
+                                    <strong>{{ participacao.usuario.nome_completo }}</strong> se inscreveu
+                                </p>
+                            </div>
+                        {% endfor %}
+                        {% for participacao in participacoes_ativas|slice:":3" %}
+                            <div class="timeline-item mb-3">
+                                <small class="text-muted">{{ participacao.data_participacao|timesince }} atrás</small>
+                                <p class="mb-0">
+                                    <strong>{{ participacao.usuario.nome_completo }}</strong> foi aprovado
+                                </p>
+                            </div>
+                        {% endfor %}
+                        
+                        {% if not participacoes_aguardando and not participacoes_ativas %}
+                            <p class="text-muted mb-0">Nenhuma atividade recente</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para rejeitar participação -->
+<div class="modal fade" id="rejeitarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-times"></i> Rejeitar Participação
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="#" id="rejeitarForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Tem certeza que deseja rejeitar a participação de <strong id="rejeitarUsuarioNome"></strong>?</p>
+                    
+                    <div class="mb-3">
+                        <label for="motivo_rejeicao" class="form-label">Motivo da rejeição:</label>
+                        <textarea class="form-control" id="motivo_rejeicao" name="motivo_rejeicao" rows="3" 
+                                  placeholder="Explique o motivo da rejeição..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Esta ação não pode ser desfeita. O usuário precisará se inscrever novamente.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban"></i> Rejeitar Participação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para remover participante ativo -->
+<div class="modal fade" id="removerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-minus"></i> Remover Participante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="#" id="removerForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Tem certeza que deseja remover <strong id="removerUsuarioNome"></strong> da campanha?</p>
+                    
+                    <div class="mb-3">
+                        <label for="motivo_remocao" class="form-label">Motivo da remoção:</label>
+                        <textarea class="form-control" id="motivo_remocao" name="motivo_remocao" rows="3" 
+                                  placeholder="Explique o motivo da remoção..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Esta ação removerá permanentemente o participante da campanha.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-user-minus"></i> Remover Participante
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal de rejeição
+    const rejeitarModal = document.getElementById('rejeitarModal');
+    rejeitarModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const participacaoId = button.getAttribute('data-participacao-id');
+        const usuarioNome = button.getAttribute('data-usuario-nome');
+        
+        const form = document.getElementById('rejeitarForm');
+        const usuarioNomeSpan = document.getElementById('rejeitarUsuarioNome');
+        
+        form.action = `{% url 'campanhas:rejeitar_participacao' 0 %}`.replace('0', participacaoId);
+        usuarioNomeSpan.textContent = usuarioNome;
+    });
+    
+    // Modal de remoção
+    const removerModal = document.getElementById('removerModal');
+    removerModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const participacaoId = button.getAttribute('data-participacao-id');
+        const usuarioNome = button.getAttribute('data-usuario-nome');
+        
+        const form = document.getElementById('removerForm');
+        const usuarioNomeSpan = document.getElementById('removerUsuarioNome');
+        
+        form.action = `{% url 'campanhas:remover_participante' 0 %}`.replace('0', participacaoId);
+        usuarioNomeSpan.textContent = usuarioNome;
+    });
+});
+</script>
+{% endblock %}

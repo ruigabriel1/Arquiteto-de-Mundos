@@ -1,0 +1,628 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .arquiteto-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .ia-card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .ia-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .conteudo-gerado {
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+    }
+    
+    .oportunidade-narrativa {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border-radius: 0.25rem;
+    }
+    
+    .oportunidade-alta {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .oportunidade-media {
+        border-left: 4px solid #ffc107;
+    }
+    
+    .oportunidade-baixa {
+        border-left: 4px solid #28a745;
+    }
+    
+    .memoria-importante {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border-radius: 0.25rem;
+    }
+    
+    .btn-ia {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+    }
+    
+    .btn-ia:hover {
+        background: linear-gradient(45deg, #5a6fd8, #6a419a);
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        margin: 1rem 0;
+    }
+    
+    .config-panel {
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .status-ativo {
+        color: #28a745;
+    }
+    
+    .status-pausado {
+        color: #ffc107;
+    }
+    
+    .status-encerrado {
+        color: #dc3545;
+    }
+    
+    .estatisticas-card {
+        text-align: center;
+        padding: 1.5rem;
+    }
+    
+    .estatisticas-numero {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .sidebar-ia {
+        background: #f8f9fa;
+        min-height: 100vh;
+        padding: 1rem;
+    }
+    
+    .chat-container {
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .mensagem-ia {
+        background: #e3f2fd;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border-radius: 0.5rem;
+        border-left: 4px solid #2196f3;
+    }
+    
+    .mensagem-usuario {
+        background: #f8f9fa;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border-radius: 0.5rem;
+        border-left: 4px solid #6c757d;
+        text-align: right;
+    }
+    
+    .tokens-info {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    
+    .custo-estimado {
+        color: #dc3545;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="arquiteto-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    Arquiteto de Mundos
+                </h1>
+                <p class="mb-0 opacity-75">Sistema Inteligente de Mestre para RPG</p>
+            </div>
+            {% if sessao %}
+            <div class="col-auto">
+                <span class="badge bg-light text-dark fs-6">
+                    <i class="fas fa-dice-d20 me-1"></i>
+                    {{ sessao.nome_sessao }}
+                </span>
+                <span class="badge {% if sessao.status == 'ATIVA' %}bg-success{% elif sessao.status == 'PAUSADA' %}bg-warning{% else %}bg-danger{% endif %}">
+                    {{ sessao.get_status_display }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    {% block ia_content %}
+    <!-- Conteúdo específico da página será inserido aqui -->
+    {% endblock %}
+</div>
+
+<!-- Modais comuns -->
+<!-- Modal de Loading -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <h5>Arquiteto de Mundos está pensando...</h5>
+                <p class="text-muted mb-0" id="loadingMessage">Gerando conteúdo narrativo único para sua campanha.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Configurações -->
+<div class="modal fade" id="configModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cogs me-2"></i>
+                    Configurações da Sessão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% if sessao %}
+                <form id="configForm">
+                    <div class="mb-3">
+                        <label for="estilo_narrativo" class="form-label">Estilo Narrativo</label>
+                        <select class="form-select" id="estilo_narrativo" name="estilo_narrativo">
+                            <option value="EPICO" {% if sessao.estilo_narrativo == 'EPICO' %}selected{% endif %}>Épico</option>
+                            <option value="MISTERIOSO" {% if sessao.estilo_narrativo == 'MISTERIOSO' %}selected{% endif %}>Misterioso</option>
+                            <option value="SOMBRIO" {% if sessao.estilo_narrativo == 'SOMBRIO' %}selected{% endif %}>Sombrio</option>
+                            <option value="HEROICO" {% if sessao.estilo_narrativo == 'HEROICO' %}selected{% endif %}>Heroico</option>
+                            <option value="COMICO" {% if sessao.estilo_narrativo == 'COMICO' %}selected{% endif %}>Cômico</option>
+                            <option value="REALISTA" {% if sessao.estilo_narrativo == 'REALISTA' %}selected{% endif %}>Realista</option>
+                            <option value="ROMANTICO" {% if sessao.estilo_narrativo == 'ROMANTICO' %}selected{% endif %}>Romântico</option>
+                            <option value="HORROR" {% if sessao.estilo_narrativo == 'HORROR' %}selected{% endif %}>Horror</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="nivel_criatividade" class="form-label">
+                            Nível de Criatividade: <span id="creativityValue">{{ sessao.nivel_criatividade }}</span>
+                        </label>
+                        <input type="range" class="form-range" id="nivel_criatividade" name="nivel_criatividade" 
+                               min="1" max="10" value="{{ sessao.nivel_criatividade }}" 
+                               oninput="document.getElementById('creativityValue').textContent = this.value">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Conservador</small>
+                            <small class="text-muted">Muito Criativo</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="nivel_dificuldade" class="form-label">
+                            Nível de Dificuldade: <span id="difficultyValue">{{ sessao.nivel_dificuldade }}</span>
+                        </label>
+                        <input type="range" class="form-range" id="nivel_dificuldade" name="nivel_dificuldade" 
+                               min="1" max="10" value="{{ sessao.nivel_dificuldade }}"
+                               oninput="document.getElementById('difficultyValue').textContent = this.value">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Fácil</small>
+                            <small class="text-muted">Muito Difícil</small>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-ia" onclick="salvarConfiguracoes()">
+                    <i class="fas fa-save me-1"></i>
+                    Salvar Configurações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Evento -->
+<div class="modal fade" id="eventoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-bookmark me-2"></i>
+                    Registrar Evento Importante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="eventoForm">
+                    <div class="mb-3">
+                        <label for="evento_descricao" class="form-label">Descrição do Evento</label>
+                        <textarea class="form-control" id="evento_descricao" name="evento" rows="4" 
+                                  placeholder="Descreva o que aconteceu de importante na sessão..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="evento_participantes" class="form-label">Personagens Envolvidos</label>
+                                <input type="text" class="form-control" id="evento_participantes" 
+                                       placeholder="Separe por vírgulas">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="evento_locais" class="form-label">Locais Relevantes</label>
+                                <input type="text" class="form-control" id="evento_locais" 
+                                       placeholder="Separe por vírgulas">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="evento_importancia" class="form-label">
+                            Importância: <span id="importanceValue">5</span>
+                        </label>
+                        <input type="range" class="form-range" id="evento_importancia" name="importancia" 
+                               min="1" max="10" value="5" 
+                               oninput="document.getElementById('importanceValue').textContent = this.value">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Menor</small>
+                            <small class="text-muted">Muito Importante</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="evento_tags" class="form-label">Tags</label>
+                        <input type="text" class="form-control" id="evento_tags" 
+                               placeholder="Separe por vírgulas (ex: combate, roleplay, mistério)">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-ia" onclick="registrarEvento()">
+                    <i class="fas fa-bookmark me-1"></i>
+                    Registrar na Memória
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Variáveis globais
+const SESSAO_ID = {{ sessao.id|default:"null" }};
+const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+const configModal = new bootstrap.Modal(document.getElementById('configModal'));
+const eventoModal = new bootstrap.Modal(document.getElementById('eventoModal'));
+
+// Utilitários
+function showLoading(message = 'Gerando conteúdo narrativo único para sua campanha.') {
+    document.getElementById('loadingMessage').textContent = message;
+    loadingModal.show();
+}
+
+function hideLoading() {
+    loadingModal.hide();
+}
+
+function showAlert(message, type = 'info') {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insere no topo da página
+    const container = document.querySelector('.container-fluid');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-remove após 5 segundos
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// API calls
+async function gerarConteudo(tipo, parametros = {}) {
+    if (!SESSAO_ID) {
+        showAlert('Erro: Sessão não identificada', 'danger');
+        return null;
+    }
+    
+    showLoading(`Gerando ${tipo}...`);
+    
+    try {
+        const response = await fetch('{% url "ia_gm:api_gerar_conteudo" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                sessao_id: SESSAO_ID,
+                tipo: tipo,
+                parametros: parametros
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.sucesso) {
+            showAlert(`${tipo.charAt(0).toUpperCase() + tipo.slice(1)} gerado com sucesso!`, 'success');
+            return data;
+        } else {
+            showAlert(`Erro ao gerar ${tipo}: ${data.erro}`, 'danger');
+            return null;
+        }
+    } catch (error) {
+        console.error('Erro na API:', error);
+        showAlert(`Erro de comunicação: ${error.message}`, 'danger');
+        return null;
+    } finally {
+        hideLoading();
+    }
+}
+
+async function registrarEvento() {
+    const evento = document.getElementById('evento_descricao').value;
+    const participantes = document.getElementById('evento_participantes').value.split(',').map(s => s.trim()).filter(s => s);
+    const locais = document.getElementById('evento_locais').value.split(',').map(s => s.trim()).filter(s => s);
+    const importancia = parseInt(document.getElementById('evento_importancia').value);
+    const tags = document.getElementById('evento_tags').value.split(',').map(s => s.trim()).filter(s => s);
+    
+    if (!evento.trim()) {
+        showAlert('Por favor, descreva o evento', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('{% url "ia_gm:api_registrar_evento" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                sessao_id: SESSAO_ID,
+                evento: evento,
+                participantes: participantes,
+                locais: locais,
+                importancia: importancia,
+                tags: tags
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.sucesso) {
+            showAlert('Evento registrado na memória!', 'success');
+            eventoModal.hide();
+            
+            // Limpa o formulário
+            document.getElementById('eventoForm').reset();
+            document.getElementById('importanceValue').textContent = '5';
+        } else {
+            showAlert(`Erro ao registrar evento: ${data.erro}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Erro na API:', error);
+        showAlert(`Erro de comunicação: ${error.message}`, 'danger');
+    }
+}
+
+async function salvarConfiguracoes() {
+    const estilo = document.getElementById('estilo_narrativo').value;
+    const criatividade = parseInt(document.getElementById('nivel_criatividade').value);
+    const dificuldade = parseInt(document.getElementById('nivel_dificuldade').value);
+    
+    try {
+        const response = await fetch('{% url "ia_gm:api_configuracoes" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                sessao_id: SESSAO_ID,
+                estilo_narrativo: estilo,
+                nivel_criatividade: criatividade,
+                nivel_dificuldade: dificuldade
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.sucesso) {
+            showAlert('Configurações atualizadas!', 'success');
+            configModal.hide();
+            
+            // Atualiza a página para refletir as mudanças
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert(`Erro ao salvar: ${data.erro}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Erro na API:', error);
+        showAlert(`Erro de comunicação: ${error.message}`, 'danger');
+    }
+}
+
+// Funções específicas de conteúdo
+async function gerarNPC() {
+    const situacao = prompt('Descreva a situação onde o NPC aparecerá:');
+    if (!situacao) return;
+    
+    const resultado = await gerarConteudo('npc', {
+        situacao_atual: situacao,
+        requisito_especifico: 'Criar um NPC interessante para esta situação'
+    });
+    
+    if (resultado) {
+        mostrarConteudoGerado('NPC', resultado.conteudo);
+    }
+}
+
+async function gerarLocal() {
+    const tipo = prompt('Que tipo de local você precisa? (taverna, calabouço, cidade, etc.)');
+    if (!tipo) return;
+    
+    const resultado = await gerarConteudo('local', {
+        tipo_local: tipo,
+        situacao_atual: 'Os jogadores estão explorando'
+    });
+    
+    if (resultado) {
+        mostrarConteudoGerado('Local', resultado.conteudo);
+    }
+}
+
+async function gerarMissao() {
+    const tipo = prompt('Que tipo de missão você precisa? (investigação, resgate, combate, etc.)');
+    if (!tipo) return;
+    
+    const resultado = await gerarConteudo('missao', {
+        tipo_missao: tipo,
+        situacao_atual: 'Os jogadores estão prontos para uma nova aventura'
+    });
+    
+    if (resultado) {
+        mostrarConteudoGerado('Missão', resultado.conteudo);
+    }
+}
+
+async function processarAcao() {
+    const acao = prompt('Descreva a ação que os jogadores querem realizar:');
+    if (!acao) return;
+    
+    const resultado = await gerarConteudo('narrativa', {
+        acao_jogadores: acao,
+        situacao_anterior: 'Ação dos jogadores'
+    });
+    
+    if (resultado) {
+        mostrarConteudoGerado('Resposta Narrativa', resultado.conteudo);
+    }
+}
+
+async function processarAcaoImpossivel() {
+    const acao = prompt('Descreva a ação "impossível" que o jogador quer tentar:');
+    if (!acao) return;
+    
+    const razao = prompt('Por que seria impossível? (opcional)') || 'Viola leis da física/magia';
+    
+    const resultado = await gerarConteudo('acao_impossivel', {
+        acao_tentada: acao,
+        razao_impossivel: razao
+    });
+    
+    if (resultado) {
+        mostrarConteudoGerado('Resultado Criativo', resultado.conteudo);
+    }
+}
+
+function mostrarConteudoGerado(titulo, conteudo) {
+    const html = `
+        <div class="conteudo-gerado">
+            <h5><i class="fas fa-magic me-2"></i>${titulo}</h5>
+            <div class="conteudo">${conteudo.replace(/\n/g, '<br>')}</div>
+            <div class="tokens-info">
+                <i class="fas fa-info-circle me-1"></i>
+                Gerado pelo Arquiteto de Mundos
+            </div>
+        </div>
+    `;
+    
+    // Adiciona ao container principal ou cria um
+    let container = document.getElementById('conteudo-gerado-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'conteudo-gerado-container';
+        document.querySelector('.container-fluid').appendChild(container);
+    }
+    
+    container.insertAdjacentHTML('beforeend', html);
+    
+    // Scroll para o novo conteúdo
+    container.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    // Adiciona CSRF token a todas as requests
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfToken) {
+        // Cria o token se não existir
+        const meta = document.createElement('meta');
+        meta.name = 'csrf-token';
+        meta.content = '{{ csrf_token }}';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'csrfmiddlewaretoken';
+        input.value = '{{ csrf_token }}';
+        document.body.appendChild(input);
+    }
+    
+    console.log('Arquiteto de Mundos carregado');
+    {% if sessao %}
+    console.log('Sessão ID:', SESSAO_ID);
+    {% endif %}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+
+{% block title %}Biblioteca de Conteúdo - {{ sessao.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'ia_gm:sessao' sessao.id %}" class="btn btn-outline-light me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-books me-2 text-primary"></i>
+                            Biblioteca de Conteúdo
+                        </h2>
+                        <p class="text-muted mb-0">
+                            {{ sessao.nome }} • {{ sessao.campanha.nome }}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="exportarBiblioteca()">
+                        <i class="fas fa-download me-2"></i>Exportar Tudo
+                    </button>
+                    <button class="btn btn-outline-success" onclick="gerarIndice()">
+                        <i class="fas fa-list me-2"></i>Gerar Índice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary bg-opacity-10 border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-user fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-1">{{ npcs.count }}</h4>
+                    <small class="text-muted">NPCs Criados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success bg-opacity-10 border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-map-marker-alt fa-2x text-success mb-2"></i>
+                    <h4 class="mb-1">{{ locais_count|default:0 }}</h4>
+                    <small class="text-muted">Locais Descritos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning bg-opacity-10 border-warning">
+                <div class="card-body text-center">
+                    <i class="fas fa-scroll fa-2x text-warning mb-2"></i>
+                    <h4 class="mb-1">{{ missoes_count|default:0 }}</h4>
+                    <small class="text-muted">Missões Geradas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info bg-opacity-10 border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-comments fa-2x text-info mb-2"></i>
+                    <h4 class="mb-1">{{ total_conteudo }}</h4>
+                    <small class="text-muted">Total de Itens</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>Filtros e Busca
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row align-items-end">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Tipo de Conteúdo</label>
+                            <select class="form-select" name="tipo">
+                                <option value="todos" {% if tipo_filtro == 'todos' %}selected{% endif %}>
+                                    Todos os Tipos
+                                </option>
+                                <option value="npc" {% if tipo_filtro == 'npc' %}selected{% endif %}>
+                                    NPCs
+                                </option>
+                                <option value="local" {% if tipo_filtro == 'local' %}selected{% endif %}>
+                                    Locais
+                                </option>
+                                <option value="missao" {% if tipo_filtro == 'missao' %}selected{% endif %}>
+                                    Missões
+                                </option>
+                                <option value="item" {% if tipo_filtro == 'item' %}selected{% endif %}>
+                                    Itens
+                                </option>
+                                <option value="interacao" {% if tipo_filtro == 'interacao' %}selected{% endif %}>
+                                    Interações
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Ordenar por</label>
+                            <select class="form-select" name="ordem">
+                                <option value="recente">Mais Recente</option>
+                                <option value="antigo">Mais Antigo</option>
+                                <option value="nome">Nome A-Z</option>
+                                <option value="relevancia">Relevância</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" class="form-control" name="busca" 
+                                   value="{{ busca }}" placeholder="Nome, descrição, tags...">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>Filtrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="row">
+        <!-- NPCs -->
+        {% if tipo_filtro == 'todos' or tipo_filtro == 'npc' %}
+            {% if npcs %}
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-users me-2"></i>NPCs Gerados
+                            </h5>
+                            <span class="badge bg-primary">{{ npcs.count }} NPCs</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for npc in npcs %}
+                                    <div class="col-lg-6 col-xl-4 mb-3">
+                                        <div class="card h-100 border-secondary">
+                                            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-user me-2 text-primary"></i>
+                                                    {{ npc.nome }}
+                                                </h6>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-light dropdown-toggle" 
+                                                            data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <a class="dropdown-item" href="#" 
+                                                               onclick="verDetalhesNPC({{ npc.id }})">
+                                                                <i class="fas fa-eye me-2"></i>Ver Detalhes
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" href="#" 
+                                                               onclick="editarNPC({{ npc.id }})">
+                                                                <i class="fas fa-edit me-2"></i>Editar
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" href="#" 
+                                                               onclick="copiarNPC({{ npc.id }})">
+                                                                <i class="fas fa-copy me-2"></i>Copiar
+                                                            </a>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <a class="dropdown-item text-danger" href="#" 
+                                                               onclick="removerNPC({{ npc.id }})">
+                                                                <i class="fas fa-trash me-2"></i>Remover
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="card-body py-2">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    {% if npc.titulo %}
+                                                        <span class="badge bg-secondary me-2">{{ npc.titulo }}</span>
+                                                    {% endif %}
+                                                    {% if npc.raca %}
+                                                        <small class="text-muted">{{ npc.raca }}</small>
+                                                    {% endif %}
+                                                    {% if npc.classe %}
+                                                        <small class="text-muted">• {{ npc.classe }}</small>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <p class="text-muted small mb-2">
+                                                    {{ npc.descricao_fisica|truncatewords:15 }}
+                                                </p>
+                                                
+                                                <div class="mb-2">
+                                                    <strong class="text-info small">Motivação:</strong>
+                                                    <div class="text-muted small">
+                                                        {{ npc.motivacao_principal|truncatewords:10 }}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        {{ npc.data_criacao|date:"d/m/Y" }}
+                                                    </small>
+                                                    <span class="badge bg-{{ npc.disposicao|lower }}">
+                                                        {{ npc.get_disposicao_display }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Interações e Outros Conteúdos -->
+        {% if tipo_filtro == 'todos' or tipo_filtro == 'interacao' %}
+            {% if interacoes %}
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-comments me-2"></i>Conteúdo das Interações
+                            </h5>
+                            <span class="badge bg-info">{{ interacoes.count }} interações</span>
+                        </div>
+                        <div class="card-body">
+                            {% for interacao in interacoes %}
+                                <div class="card mb-3 border-secondary">
+                                    <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                        <div>
+                                            <span class="badge bg-{{ interacao.tipo_interacao|lower }} me-2">
+                                                {{ interacao.get_tipo_interacao_display }}
+                                            </span>
+                                            <small class="text-muted">
+                                                {{ interacao.data_interacao|date:"d/m/Y H:i" }}
+                                            </small>
+                                        </div>
+                                        <div>
+                                            {% if interacao.tokens_usados > 0 %}
+                                                <span class="badge bg-secondary me-2">
+                                                    {{ interacao.tokens_usados }} tokens
+                                                </span>
+                                            {% endif %}
+                                            <button class="btn btn-sm btn-outline-light" 
+                                                    data-bs-toggle="collapse" 
+                                                    data-bs-target="#interacao-{{ interacao.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="collapse" id="interacao-{{ interacao.id }}">
+                                        <div class="card-body py-2">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-primary">
+                                                        <i class="fas fa-user me-2"></i>Solicitação
+                                                    </h6>
+                                                    <div class="p-2 bg-primary bg-opacity-10 rounded small">
+                                                        {{ interacao.prompt_usuario|linebreaksbr }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-success">
+                                                        <i class="fas fa-robot me-2"></i>Resposta da IA
+                                                    </h6>
+                                                    <div class="p-2 bg-success bg-opacity-10 rounded small">
+                                                        {{ interacao.resposta_ia|linebreaksbr }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-2 d-flex gap-2">
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        onclick="copiarConteudo('{{ interacao.resposta_ia|escapejs }}')">
+                                                    <i class="fas fa-copy me-1"></i>Copiar Resposta
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success" 
+                                                        onclick="salvarComoTemplate({{ interacao.id }})">
+                                                    <i class="fas fa-bookmark me-1"></i>Salvar como Template
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Estado vazio -->
+        {% if not npcs and not interacoes %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-book fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted mb-3">Biblioteca Vazia</h4>
+                        <p class="text-muted mb-4">
+                            {% if busca %}
+                                Nenhum conteúdo encontrado com os filtros aplicados.
+                                <br>Tente ajustar os filtros ou fazer uma nova busca.
+                            {% else %}
+                                Esta sessão ainda não tem conteúdo gerado pela IA.
+                                <br>Comece a interagir com o Arquiteto de Mundos para preencher sua biblioteca!
+                            {% endif %}
+                        </p>
+                        
+                        {% if not busca %}
+                            <div class="row justify-content-center">
+                                <div class="col-md-6">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="p-3 bg-primary bg-opacity-10 rounded mb-3">
+                                                <i class="fas fa-user fa-2x text-primary mb-2"></i>
+                                                <h6>Crie NPCs</h6>
+                                                <small class="text-muted">
+                                                    Use "/npc" para gerar personagens únicos
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-3 bg-success bg-opacity-10 rounded mb-3">
+                                                <i class="fas fa-map fa-2x text-success mb-2"></i>
+                                                <h6>Descreva Locais</h6>
+                                                <small class="text-muted">
+                                                    Use "/ambiente" para criar cenários
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'ia_gm:sessao' sessao.id %}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar à Sessão
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Detalhes do NPC -->
+<div class="modal fade" id="modalDetalhesNPC" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="fas fa-user me-2"></i>Detalhes do NPC
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalhes-npc-content">
+                <!-- Conteúdo será carregado dinamicamente -->
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="text-muted mb-0">Carregando detalhes do NPC...</p>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="usarNPCNaSessao()">
+                    <i class="fas fa-play me-2"></i>Usar na Sessão
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .content-preview {
+        max-height: 100px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .content-preview::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(transparent, var(--bs-dark));
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let modalDetalhesNPC;
+    let npcAtual = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        modalDetalhesNPC = new bootstrap.Modal(document.getElementById('modalDetalhesNPC'));
+        
+        // Adicionar efeito hover aos cards
+        document.querySelectorAll('.card').forEach(card => {
+            card.classList.add('card-hover');
+        });
+    });
+    
+    function verDetalhesNPC(npcId) {
+        npcAtual = npcId;
+        modalDetalhesNPC.show();
+        
+        // Simular carregamento de detalhes
+        setTimeout(() => {
+            const detalhesHTML = `
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" 
+                             style="width: 100px; height: 100px;">
+                            <i class="fas fa-user fa-3x text-white"></i>
+                        </div>
+                        <h4>Aldric Forjaferro</h4>
+                        <p class="text-muted">Ferreiro Anão</p>
+                        <span class="badge bg-success">Amigável</span>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <h6 class="text-primary">Descrição Física</h6>
+                            <p class="text-muted">
+                                Um anão robusto de barba grisalha, com mãos calejadas pelo trabalho na forja. 
+                                Seus olhos verdes brilham com sabedoria e um toque de melancolia.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-success">Personalidade</h6>
+                            <p class="text-muted">
+                                <strong>Motivação:</strong> Resgatar a honra de sua família após um erro do passado<br>
+                                <strong>Falha:</strong> Teimosia e dificuldade em aceitar ajuda<br>
+                                <strong>Segredo:</strong> Foi responsável por uma arma que causou grande destruição
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-warning">Informações de Jogo</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Nível de Poder:</small> 3
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Localização:</small> Forja Central
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Dicas de Interpretação</h6>
+                            <ul class="mb-0 small">
+                                <li>Fala com sotaque anão carregado</li>
+                                <li>Sempre oferece bebida aos visitantes</li>
+                                <li>Fica nervoso quando perguntam sobre o passado</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('detalhes-npc-content').innerHTML = detalhesHTML;
+        }, 1000);
+    }
+    
+    function editarNPC(npcId) {
+        showNotification('Funcionalidade de edição em desenvolvimento', 'info');
+    }
+    
+    function copiarNPC(npcId) {
+        // Simular cópia do conteúdo do NPC
+        const textoNPC = `Nome: Aldric Forjaferro
+Classe: Ferreiro Anão
+Motivação: Resgatar a honra de sua família
+Descrição: Um anão robusto de barba grisalha...`;
+        
+        navigator.clipboard.writeText(textoNPC).then(() => {
+            showNotification('Detalhes do NPC copiados!', 'success');
+        });
+    }
+    
+    function removerNPC(npcId) {
+        if (confirm('Tem certeza que deseja remover este NPC da biblioteca?')) {
+            showNotification('NPC removido da biblioteca', 'success');
+            // Remover elemento da interface
+            document.querySelector(`[onclick="removerNPC(${npcId})"]`)
+                    .closest('.col-lg-6').remove();
+        }
+    }
+    
+    function copiarConteudo(conteudo) {
+        navigator.clipboard.writeText(conteudo).then(() => {
+            showNotification('Conteúdo copiado!', 'success');
+        });
+    }
+    
+    function salvarComoTemplate(interacaoId) {
+        showNotification('Salvando como template...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Template salvo com sucesso!', 'success');
+        }, 1500);
+    }
+    
+    function usarNPCNaSessao() {
+        modalDetalhesNPC.hide();
+        showNotification('NPC adicionado à sessão ativa!', 'success');
+        
+        setTimeout(() => {
+            if (confirm('Deseja ir para a sessão ativa?')) {
+                window.location.href = "{% url 'ia_gm:sessao' sessao.id %}";
+            }
+        }, 1000);
+    }
+    
+    function exportarBiblioteca() {
+        showNotification('Preparando exportação da biblioteca...', 'info');
+        
+        // Simular progresso de exportação
+        let progresso = 0;
+        const interval = setInterval(() => {
+            progresso += 20;
+            showNotification(`Exportando... ${progresso}%`, 'info');
+            
+            if (progresso >= 100) {
+                clearInterval(interval);
+                showNotification('Biblioteca exportada com sucesso!', 'success');
+            }
+        }, 500);
+    }
+    
+    function gerarIndice() {
+        showNotification('Gerando índice inteligente...', 'info');
+        
+        setTimeout(() => {
+            const indice = `# Índice da Biblioteca - {{ sessao.nome }}
+
+## NPCs Gerados
+- Aldric Forjaferro (Ferreiro, Amigável)
+- [Outros NPCs...]
+
+## Locais Criados
+- [Locais descritos...]
+
+## Interações Importantes
+- [Momentos marcantes...]
+`;
+            
+            navigator.clipboard.writeText(indice).then(() => {
+                showNotification('Índice copiado para área de transferência!', 'success');
+            });
+        }, 2000);
+    }
+    
+    // Filtro em tempo real
+    let timeoutBusca;
+    document.querySelector('input[name="busca"]').addEventListener('input', function() {
+        clearTimeout(timeoutBusca);
+        timeoutBusca = setTimeout(() => {
+            // this.form.submit();
+        }, 500);
+    });
+</script>
+{% endblock %}

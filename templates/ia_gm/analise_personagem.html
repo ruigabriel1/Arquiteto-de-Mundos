@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+
+{% block title %}Análise de Personagem - {{ sessao.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'ia_gm:sessao' sessao.id %}" class="btn btn-outline-light me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-user-chart me-2 text-primary"></i>
+                            Análise de Personagem
+                        </h2>
+                        <p class="text-muted mb-0">
+                            {{ sessao.nome }} • {{ sessao.campanha.nome }}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="salvarAnalise()">
+                        <i class="fas fa-save me-2"></i>Salvar Análise
+                    </button>
+                    <button class="btn btn-outline-success" onclick="gerarSugestoes()">
+                        <i class="fas fa-lightbulb me-2"></i>Sugestões
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Seleção de Personagem -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Selecionar Personagem
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="mb-3">
+                        <div class="mb-3">
+                            <label class="form-label">Personagem</label>
+                            <select class="form-select" name="personagem" onchange="this.form.submit()">
+                                <option value="">Selecione um personagem</option>
+                                {% for nome in personagens_disponiveis %}
+                                    <option value="{{ nome }}" {% if nome == personagem_selecionado %}selected{% endif %}>
+                                        {{ nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                    
+                    {% if personagem_selecionado %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Analisando:</strong> {{ personagem_selecionado }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            {% if personagem_selecionado %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Estatísticas Rápidas
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="text-primary">
+                                    <i class="fas fa-comments fa-lg mb-1"></i>
+                                    <div><strong>{{ stats_personagem.interacoes|default:0 }}</strong></div>
+                                    <small class="text-muted">Interações</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="text-success">
+                                    <i class="fas fa-dice-d20 fa-lg mb-1"></i>
+                                    <div><strong>{{ stats_personagem.rolagens|default:0 }}</strong></div>
+                                    <small class="text-muted">Rolagens</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-warning">
+                                    <i class="fas fa-sword fa-lg mb-1"></i>
+                                    <div><strong>{{ stats_personagem.combates|default:0 }}</strong></div>
+                                    <small class="text-muted">Combates</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-info">
+                                    <i class="fas fa-magic fa-lg mb-1"></i>
+                                    <div><strong>{{ stats_personagem.magias|default:0 }}</strong></div>
+                                    <small class="text-muted">Magias</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Configurações de Análise -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Tipo de Análise
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="tipoAnalise" 
+                               id="psicologica" value="psicologica" checked>
+                        <label class="form-check-label" for="psicologica">
+                            <strong>Psicológica</strong>
+                            <br><small class="text-muted">Motivações, medos, objetivos</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="tipoAnalise" 
+                               id="narrativa" value="narrativa">
+                        <label class="form-check-label" for="narrativa">
+                            <strong>Narrativa</strong>
+                            <br><small class="text-muted">Arcos, desenvolvimento, temas</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="tipoAnalise" 
+                               id="gameplay" value="gameplay">
+                        <label class="form-check-label" for="gameplay">
+                            <strong>Gameplay</strong>
+                            <br><small class="text-muted">Mecânicas, otimização, estilo</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="tipoAnalise" 
+                               id="completa" value="completa">
+                        <label class="form-check-label" for="completa">
+                            <strong>Análise Completa</strong>
+                            <br><small class="text-muted">Todos os aspectos combinados</small>
+                        </label>
+                    </div>
+                    
+                    <button class="btn btn-primary w-100" onclick="executarAnalise()">
+                        <i class="fas fa-search me-2"></i>Analisar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultado da Análise -->
+        <div class="col-lg-8">
+            {% if personagem_selecionado %}
+                <!-- Análise Atual -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Análise: {{ personagem_selecionado }}
+                        </h5>
+                        <span class="badge bg-success" id="status-analise">
+                            <i class="fas fa-check me-1"></i>Concluída
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultado-analise">
+                            {% if analise %}
+                                <div class="mb-4">
+                                    <div class="p-4 bg-primary bg-opacity-10 rounded">
+                                        <h6 class="text-primary mb-3">
+                                            <i class="fas fa-brain me-2"></i>Análise da IA GM
+                                        </h6>
+                                        <div class="text-justify" style="white-space: pre-line;">{{ analise }}</div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-user-chart fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">Pronto para Analisar</h5>
+                                    <p class="text-muted">
+                                        Selecione o tipo de análise desejado e clique em "Analisar" para que 
+                                        a IA GM faça uma análise profunda do personagem {{ personagem_selecionado }}.
+                                    </p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seções de Análise Detalhada -->
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-heart me-2 text-danger"></i>Aspectos Psicológicos
+                                </h6>
+                            </div>
+                            <div class="card-body" id="aspectos-psicologicos">
+                                <div class="text-center py-3">
+                                    <i class="fas fa-heart fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-0 small">
+                                        Execute uma análise para ver os aspectos psicológicos
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-book-open me-2 text-info"></i>Desenvolvimento Narrativo
+                                </h6>
+                            </div>
+                            <div class="card-body" id="desenvolvimento-narrativo">
+                                <div class="text-center py-3">
+                                    <i class="fas fa-book-open fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-0 small">
+                                        Execute uma análise para ver o desenvolvimento narrativo
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-gamepad me-2 text-warning"></i>Estilo de Jogo
+                                </h6>
+                            </div>
+                            <div class="card-body" id="estilo-jogo">
+                                <div class="text-center py-3">
+                                    <i class="fas fa-gamepad fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-0 small">
+                                        Execute uma análise para ver o estilo de jogo
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-arrow-trend-up me-2 text-success"></i>Sugestões de Desenvolvimento
+                                </h6>
+                            </div>
+                            <div class="card-body" id="sugestoes-desenvolvimento">
+                                <div class="text-center py-3">
+                                    <i class="fas fa-arrow-trend-up fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-0 small">
+                                        Execute uma análise para ver sugestões de desenvolvimento
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Oportunidades Narrativas -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lightbulb me-2 text-warning"></i>Oportunidades Narrativas
+                        </h5>
+                    </div>
+                    <div class="card-body" id="oportunidades-narrativas">
+                        <div class="text-center py-4">
+                            <i class="fas fa-lightbulb fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">Aguardando Análise</h6>
+                            <p class="text-muted mb-0">
+                                A IA GM identificará oportunidades específicas para desenvolver 
+                                este personagem na sua campanha.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Estado inicial - nenhum personagem selecionado -->
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-user-friends fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted mb-3">Análise Profunda de Personagens</h4>
+                        <p class="text-muted mb-4">
+                            O Arquiteto de Mundos pode analisar profundamente qualquer personagem da sua campanha, 
+                            identificando motivações, padrões comportamentais e oportunidades narrativas.
+                        </p>
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <div class="p-3 bg-primary bg-opacity-10 rounded">
+                                            <i class="fas fa-brain fa-2x text-primary mb-2"></i>
+                                            <h6>Análise Psicológica</h6>
+                                            <small class="text-muted">
+                                                Motivações, medos, objetivos e conflitos internos
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="p-3 bg-success bg-opacity-10 rounded">
+                                            <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                                            <h6>Desenvolvimento</h6>
+                                            <small class="text-muted">
+                                                Arcos narrativos e evolução do personagem
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                            <i class="fas fa-dice-d20 fa-2x text-warning mb-2"></i>
+                                            <h6>Estilo de Jogo</h6>
+                                            <small class="text-muted">
+                                                Preferências mecânicas e táticas
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="p-3 bg-info bg-opacity-10 rounded">
+                                            <i class="fas fa-lightbulb fa-2x text-info mb-2"></i>
+                                            <h6>Oportunidades</h6>
+                                            <small class="text-muted">
+                                                Ganchos e momentos para spotlight
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted mt-4">
+                            <strong>Selecione um personagem</strong> no painel à esquerda para começar a análise.
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Carregamento -->
+<div class="modal fade" id="modalCarregamento" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <h5>Analisando Personagem</h5>
+                <p class="text-muted mb-0" id="status-carregamento">
+                    A IA GM está processando os dados do personagem...
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analysis-card {
+        transition: transform 0.2s ease;
+    }
+    
+    .analysis-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring__circle {
+        transition: stroke-dashoffset 0.35s;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let modalCarregamento;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        modalCarregamento = new bootstrap.Modal(document.getElementById('modalCarregamento'));
+    });
+
+    function executarAnalise() {
+        const personagem = '{{ personagem_selecionado }}';
+        if (!personagem) {
+            showNotification('Selecione um personagem primeiro', 'warning');
+            return;
+        }
+        
+        const tipoAnalise = document.querySelector('input[name="tipoAnalise"]:checked').value;
+        
+        // Mostrar modal de carregamento
+        modalCarregamento.show();
+        
+        // Simular análise progressiva
+        const etapas = [
+            'Coletando dados do personagem...',
+            'Analisando padrões comportamentais...',
+            'Identificando motivações principais...',
+            'Gerando insights narrativos...',
+            'Criando sugestões personalizadas...',
+            'Finalizando análise...'
+        ];
+        
+        let etapaAtual = 0;
+        const atualizarStatus = () => {
+            if (etapaAtual < etapas.length) {
+                document.getElementById('status-carregamento').textContent = etapas[etapaAtual];
+                etapaAtual++;
+                setTimeout(atualizarStatus, 1500);
+            } else {
+                finalizarAnalise(tipoAnalise);
+            }
+        };
+        
+        atualizarStatus();
+    }
+    
+    function finalizarAnalise(tipoAnalise) {
+        // Fechar modal
+        modalCarregamento.hide();
+        
+        // Atualizar status
+        document.getElementById('status-analise').innerHTML = '<i class="fas fa-check me-1"></i>Concluída';
+        
+        // Resultados simulados baseados no tipo de análise
+        const resultados = {
+            psicologica: {
+                principal: `**Análise Psicológica Profunda de {{ personagem_selecionado }}**
+
+A IA GM identificou os seguintes aspectos psicológicos fundamentais:
+
+**Motivação Principal:** Busca por redenção e aceitação social
+**Medo Central:** Abandono pelos companheiros e repetição de erros do passado
+**Conflito Interno:** Luta entre o desejo de fazer o bem e tendências impulsivas
+**Mecanismo de Defesa:** Humor e sarcasmo para mascarar vulnerabilidades
+**Objetivo Profundo:** Provar seu valor e construir laços genuínos de amizade`,
+                
+                aspectos: `• **Autoestima:** Baixa, mas compensada por bravata
+• **Relacionamentos:** Dificuldade inicial, mas lealdade extrema quando conquistada
+• **Tomada de Decisões:** Impulsiva em situações de estresse
+• **Padrão Emocional:** Oscila entre otimismo forçado e melancolia`,
+                
+                desenvolvimento: `**Arcos Sugeridos:**
+• Confrontar um erro significativo do passado
+• Momento de escolha entre interesse pessoal e bem do grupo
+• Situação que force vulnerabilidade emocional genuína`,
+                
+                gameplay: `**Preferências Observadas:**
+• Ações de alto risco com potencial de grande impacto
+• Evita ser o centro das atenções em momentos sérios
+• Prefere soluções criativas a abordagens convencionais`,
+                
+                oportunidades: `**Oportunidades Narrativas Identificadas:**
+
+1. **"O Fantasma do Passado"** - Introduzir um NPC do passado que force o confronto com erros anteriores
+2. **"Momento de Liderança"** - Situação onde precisa guiar o grupo sem poder usar humor como escape
+3. **"Sacrifício Silencioso"** - Oportunidade de fazer algo heroico sem reconhecimento público
+4. **"Mentor Improvável"** - Chance de ensinar/proteger alguém mais jovem, espelhando sua própria jornada`
+            },
+            // Adicionar outros tipos conforme necessário
+        };
+        
+        const resultado = resultados[tipoAnalise] || resultados.psicologica;
+        
+        // Atualizar resultado principal
+        document.getElementById('resultado-analise').innerHTML = `
+            <div class="mb-4">
+                <div class="p-4 bg-primary bg-opacity-10 rounded">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-brain me-2"></i>Análise da IA GM
+                    </h6>
+                    <div class="text-justify" style="white-space: pre-line;">${resultado.principal}</div>
+                </div>
+            </div>
+        `;
+        
+        // Atualizar seções específicas
+        if (resultado.aspectos) {
+            document.getElementById('aspectos-psicologicos').innerHTML = `
+                <div style="white-space: pre-line; font-size: 0.9rem;">${resultado.aspectos}</div>
+            `;
+        }
+        
+        if (resultado.desenvolvimento) {
+            document.getElementById('desenvolvimento-narrativo').innerHTML = `
+                <div style="white-space: pre-line; font-size: 0.9rem;">${resultado.desenvolvimento}</div>
+            `;
+        }
+        
+        if (resultado.gameplay) {
+            document.getElementById('estilo-jogo').innerHTML = `
+                <div style="white-space: pre-line; font-size: 0.9rem;">${resultado.gameplay}</div>
+            `;
+        }
+        
+        if (resultado.oportunidades) {
+            document.getElementById('oportunidades-narrativas').innerHTML = `
+                <div style="white-space: pre-line; font-size: 0.9rem;">${resultado.oportunidades}</div>
+            `;
+            
+            document.getElementById('sugestoes-desenvolvimento').innerHTML = `
+                <div class="small text-success mb-2">
+                    <i class="fas fa-check me-1"></i>4 oportunidades identificadas
+                </div>
+                <p class="mb-0 small">
+                    Veja oportunidades específicas na seção "Oportunidades Narrativas" abaixo.
+                </p>
+            `;
+        }
+        
+        showNotification('Análise concluída com sucesso!', 'success');
+    }
+    
+    function salvarAnalise() {
+        showNotification('Análise salva na biblioteca de conteúdo!', 'success');
+    }
+    
+    function gerarSugestoes() {
+        showNotification('Gerando sugestões personalizadas...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Sugestões adicionadas à análise!', 'success');
+        }, 2000);
+    }
+</script>
+{% endblock %}

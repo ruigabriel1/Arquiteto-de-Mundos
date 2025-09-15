@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<!-- CSS Version 2.0 - Improved Floating Labels -->
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .auth-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 2rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .auth-header h1 {
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .auth-header p {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 0;
+    }
+    
+    /* Reset completo para campos flutuantes */
+    .form-floating {
+        position: relative;
+        margin-bottom: 0;
+    }
+    
+    /* Input styling with better contrast */
+    .form-floating input {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        color: #ffffff !important;
+        font-size: 1rem;
+        font-weight: 500;
+        padding: 1.25rem 1rem 0.5rem 1rem !important;
+        height: 3.5rem !important;
+        border-radius: 10px !important;
+        transition: all 0.3s ease;
+    }
+    
+    /* Focus state */
+    .form-floating input:focus {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: #a855f7 !important;
+        box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2) !important;
+        color: #ffffff !important;
+        outline: none !important;
+    }
+    
+    /* Hover state */
+    .form-floating input:hover:not(:focus) {
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+    
+    /* Label styling with high contrast */
+    .form-floating label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 1.25rem 1rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        pointer-events: none;
+        border: 2px solid transparent;
+        transform-origin: 0 0;
+        transition: all 0.2s ease-in-out;
+        color: rgba(255, 255, 255, 0.8) !important;
+        font-weight: 500;
+        font-size: 1rem;
+        z-index: 2;
+    }
+    
+    /* Floating label when focused or has value */
+    .form-floating input:focus ~ label,
+    .form-floating input:not(:placeholder-shown) ~ label {
+        opacity: 1 !important;
+        transform: scale(0.8) translateY(-0.8rem) translateX(0.2rem) !important;
+        color: #c084fc !important;
+        font-weight: 600 !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Placeholder should be transparent */
+    .form-floating input::placeholder {
+        color: transparent !important;
+    }
+    
+    /* Adjust padding when floating */
+    .form-floating input:focus,
+    .form-floating input:not(:placeholder-shown) {
+        padding-top: 1.4rem !important;
+        padding-bottom: 0.6rem !important;
+    }
+    
+    /* Melhorar o espaçamento dos textos de ajuda */
+    .form-text {
+        margin-top: 0.5rem !important;
+        margin-bottom: 1.5rem !important;
+        font-size: 0.85rem !important;
+        line-height: 1.4 !important;
+        color: rgba(255, 255, 255, 0.85) !important;
+        font-weight: 400;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        border-left: 3px solid rgba(168, 85, 247, 0.4);
+    }
+    
+    /* Ícones nos textos de ajuda */
+    .form-text i {
+        color: #a855f7 !important;
+        margin-right: 0.5rem;
+    }
+    /* CSS limpo - duplicações removidas */
+    
+    /* Forçar estilos com especificidade alta */
+    .auth-card .form-floating input {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        color: #ffffff !important;
+    }
+    
+    .auth-card .form-floating input:focus {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: #a855f7 !important;
+        box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2) !important;
+    }
+    
+    .auth-card .form-floating label {
+        color: rgba(255, 255, 255, 0.8) !important;
+    }
+    
+    .auth-card .form-floating input:focus ~ label,
+    .auth-card .form-floating input:not(:placeholder-shown) ~ label {
+        color: #c084fc !important;
+        transform: scale(0.8) translateY(-0.8rem) translateX(0.2rem) !important;
+    }
+    
+    .auth-card .form-text {
+        color: rgba(255, 255, 255, 0.9) !important;
+        background: rgba(0, 0, 0, 0.3) !important;
+        border-left: 3px solid #a855f7 !important;
+    }
+    
+    .form-check-input {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .form-check-input:checked {
+        background-color: #7c3aed;
+        border-color: #7c3aed;
+    }
+    
+    .form-check-label {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .btn-auth {
+        background: linear-gradient(135deg, #7c3aed, #a855f7);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        width: 100%;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-auth:hover {
+        background: linear-gradient(135deg, #6d28d9, #9333ea);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
+        color: white;
+    }
+    
+    .btn-secondary-auth {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.8);
+        padding: 12px 24px;
+        border-radius: 10px;
+        text-decoration: none;
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary-auth:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+        text-decoration: none;
+    }
+    
+    .auth-links {
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+    
+    .auth-links a {
+        color: #a855f7;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .auth-links a:hover {
+        color: #c084fc;
+        text-decoration: underline;
+    }
+    
+    .dashboard-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(139, 92, 246, 0.1));
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
+    
+    .stat-card h3 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #c084fc;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card p {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 0;
+        font-weight: 500;
+    }
+    
+    .user-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(124, 58, 237, 0.5);
+        margin-bottom: 1rem;
+    }
+    
+    .user-level-badge {
+        background: linear-gradient(135deg, #f59e0b, #f97316);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .recent-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .recent-list li {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 10px;
+        border-left: 4px solid #7c3aed;
+    }
+    
+    .recent-list li:last-child {
+        margin-bottom: 0;
+    }
+    
+    .recent-list strong {
+        color: #c084fc;
+    }
+    
+    .recent-list small {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .invite-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-focus no primeiro input
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstInput = document.querySelector('input:not([type="hidden"])');
+        if (firstInput) {
+            firstInput.focus();
+        }
+        
+        // UX melhorado para campos flutuantes
+        const floatingInputs = document.querySelectorAll('.form-floating input');
+        floatingInputs.forEach(input => {
+            // Forçar placeholder vazio para ativar o CSS :not(:placeholder-shown)
+            input.setAttribute('placeholder', ' ');
+            
+            // Verificar se tem valor inicial
+            if (input.value && input.value.trim() !== '') {
+                input.setAttribute('data-filled', 'true');
+            }
+            
+            // Atualizar quando digitar
+            input.addEventListener('input', function() {
+                if (this.value.trim() !== '') {
+                    this.setAttribute('data-filled', 'true');
+                } else {
+                    this.removeAttribute('data-filled');
+                }
+            });
+            
+            // Detectar autofill
+            const checkAutofill = () => {
+                if (input.matches(':-webkit-autofill')) {
+                    input.setAttribute('data-filled', 'true');
+                }
+            };
+            
+            setTimeout(checkAutofill, 500);
+            input.addEventListener('animationstart', checkAutofill);
+        });
+    });
+    
+    // Validação de senha em tempo real
+    function validatePassword() {
+        const password = document.getElementById('password');
+        const confirm = document.getElementById('password_confirm');
+        const feedback = document.getElementById('password-feedback');
+        
+        if (!password || !confirm || !feedback) return;
+        
+        const checkPassword = () => {
+            const pwd = password.value;
+            const conf = confirm.value;
+            
+            let messages = [];
+            
+            if (pwd.length > 0 && pwd.length < 8) {
+                messages.push('Mínimo 8 caracteres');
+            }
+            
+            if (pwd && conf && pwd !== conf) {
+                messages.push('Senhas não conferem');
+            }
+            
+            if (messages.length > 0) {
+                feedback.innerHTML = '<small class="text-warning">' + messages.join(', ') + '</small>';
+            } else if (pwd.length >= 8) {
+                feedback.innerHTML = '<small class="text-success">✓ Senha válida</small>';
+            } else {
+                feedback.innerHTML = '';
+            }
+        };
+        
+        password.addEventListener('input', checkPassword);
+        confirm.addEventListener('input', checkPassword);
+    }
+    
+    // Inicializar validação se estiver na página de cadastro
+    if (window.location.pathname.includes('cadastro')) {
+        document.addEventListener('DOMContentLoaded', validatePassword);
+    }
+</script>
+{% endblock %}

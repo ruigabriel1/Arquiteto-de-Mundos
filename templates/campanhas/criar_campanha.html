@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Criar Nova Campanha{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(111, 66, 193, 0.2);
+    }
+    .form-section h4 {
+        color: #6f42c1;
+        border-bottom: 2px solid rgba(111, 66, 193, 0.3);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .form-control, .form-select, .form-check-input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+    .form-control:focus, .form-select:focus, .form-check-input:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: #6f42c1;
+        box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+        color: white;
+    }
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    .form-text {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    .form-check-label {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    .preview-card {
+        background: linear-gradient(45deg, #007bff, #6f42c1);
+        border-radius: 10px;
+        padding: 2rem;
+        color: white;
+        height: 100%;
+    }
+    .preview-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    .character-count {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: right;
+        margin-top: 0.25rem;
+    }
+    .required {
+        color: #ff6b6b;
+    }
+    .btn-create {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        transition: all 0.3s ease;
+    }
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Formulário principal -->
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus-circle"></i> Criar Nova Campanha</h2>
+                <a href="{% url 'campanhas:publicas' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+
+            <form method="post" id="campanhaForm">
+                {% csrf_token %}
+
+                <!-- Informações Básicas -->
+                <div class="form-section">
+                    <h4><i class="fas fa-info-circle"></i> Informações Básicas</h4>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="nome" class="form-label">
+                                Nome da Campanha <span class="required">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="nome" name="nome" 
+                                   placeholder="Digite o nome da sua campanha..." required maxlength="200"
+                                   oninput="updatePreview(); updateCharCount('nome', 200)">
+                            <div class="character-count">
+                                <span id="nome-count">0</span>/200 caracteres
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="sistema_jogo" class="form-label">
+                                Sistema de Jogo <span class="required">*</span>
+                            </label>
+                            <select class="form-select" id="sistema_jogo" name="sistema_jogo" required onchange="updatePreview()">
+                                <option value="">Selecione um sistema...</option>
+                                {% for sistema in sistemas %}
+                                    <option value="{{ sistema.id }}">{{ sistema.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="max_jogadores" class="form-label">Máximo de Jogadores</label>
+                            <input type="number" class="form-control" id="max_jogadores" name="max_jogadores" 
+                                   placeholder="Deixe vazio para ilimitado" min="1" max="20" onchange="updatePreview()">
+                            <div class="form-text">Número máximo de jogadores (opcional)</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">
+                            Descrição <span class="required">*</span>
+                        </label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="4" 
+                                  placeholder="Descreva sua campanha, o enredo, ambiente e o que os jogadores podem esperar..." 
+                                  required maxlength="1000" oninput="updatePreview(); updateCharCount('descricao', 1000)"></textarea>
+                        <div class="character-count">
+                            <span id="descricao-count">0</span>/1000 caracteres
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configurações Avançadas -->
+                <div class="form-section">
+                    <h4><i class="fas fa-cogs"></i> Configurações</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="data_inicio" class="form-label">Data de Início</label>
+                            <input type="date" class="form-control" id="data_inicio" name="data_inicio" 
+                                   min="{{ 'today'|date:'Y-m-d' }}" onchange="updatePreview()">
+                            <div class="form-text">
+                                <i class="fas fa-calendar-plus"></i> 
+                                Deixe vazio para começar imediatamente
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="publica" name="publica" 
+                                       checked onchange="updatePreview()">
+                                <label class="form-check-label" for="publica">
+                                    <strong>Campanha Pública</strong>
+                                </label>
+                                <div class="form-text">Permite que qualquer jogador se inscreva</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campo de regras especiais removido - usar configurações_gerais do modelo -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Dica:</strong> Você poderá definir regras especiais e configurações detalhadas após criar a campanha.
+                    </div>
+                </div>
+
+                <!-- Botões de ação -->
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'campanhas:publicas' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-create">
+                        <i class="fas fa-magic"></i> Criar Campanha
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Preview da campanha -->
+        <div class="col-lg-4">
+            <div class="position-sticky" style="top: 100px;">
+                <div class="preview-card">
+                    <div class="text-center preview-icon">
+                        <i class="fas fa-dice-d20"></i>
+                    </div>
+                    
+                    <h4 class="preview-nome">Nova Campanha</h4>
+                    <p class="preview-sistema text-muted mb-2">
+                        <i class="fas fa-gamepad"></i> 
+                        <span>Sistema não selecionado</span>
+                    </p>
+                    
+                    <p class="preview-organizador text-muted mb-3">
+                        <i class="fas fa-user"></i> {{ user.nome_completo|default:user.username }}
+                    </p>
+                    
+                    <div class="preview-descricao mb-3">
+                        <em>Adicione uma descrição para sua campanha...</em>
+                    </div>
+                    
+                    <hr style="border-color: rgba(255,255,255,0.2);">
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="d-block">Máx. Jogadores</small>
+                            <strong class="preview-max-jogadores">∞</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="d-block">Visibilidade</small>
+                            <strong class="preview-visibilidade">Pública</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-data-inicio mt-3 text-center" style="display: none;">
+                        <small class="d-block">Início Previsto</small>
+                        <strong></strong>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Prévia de como sua campanha aparecerá
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateCharCount(fieldId, maxLength) {
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(fieldId + '-count');
+    if (field && counter) {
+        counter.textContent = field.value.length;
+        
+        // Mudar cor se próximo do limite
+        if (field.value.length > maxLength * 0.8) {
+            counter.style.color = '#ffc107';
+        } else if (field.value.length > maxLength * 0.9) {
+            counter.style.color = '#dc3545';
+        } else {
+            counter.style.color = 'rgba(255, 255, 255, 0.7)';
+        }
+    }
+}
+
+function updatePreview() {
+    // Nome
+    const nome = document.getElementById('nome').value || 'Nova Campanha';
+    document.querySelector('.preview-nome').textContent = nome;
+    
+    // Sistema
+    const sistemaSelect = document.getElementById('sistema_jogo');
+    const sistemaText = sistemaSelect.options[sistemaSelect.selectedIndex].text || 'Sistema não selecionado';
+    document.querySelector('.preview-sistema span').textContent = sistemaText;
+    
+    // Descrição
+    const descricao = document.getElementById('descricao').value || 'Adicione uma descrição para sua campanha...';
+    const descricaoElement = document.querySelector('.preview-descricao');
+    descricaoElement.innerHTML = descricao === 'Adicione uma descrição para sua campanha...' ? 
+        '<em>' + descricao + '</em>' : descricao.substring(0, 150) + (descricao.length > 150 ? '...' : '');
+    
+    // Max jogadores
+    const maxJogadores = document.getElementById('max_jogadores').value || '∞';
+    document.querySelector('.preview-max-jogadores').textContent = maxJogadores;
+    
+    // Visibilidade
+    const publica = document.getElementById('publica').checked;
+    document.querySelector('.preview-visibilidade').textContent = publica ? 'Pública' : 'Privada';
+    
+    // Data de início
+    const dataInicio = document.getElementById('data_inicio').value;
+    const dataElement = document.querySelector('.preview-data-inicio');
+    if (dataInicio) {
+        const data = new Date(dataInicio + 'T00:00:00');
+        dataElement.querySelector('strong').textContent = data.toLocaleDateString('pt-BR');
+        dataElement.style.display = 'block';
+    } else {
+        dataElement.style.display = 'none';
+    }
+}
+
+// Inicializar preview
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+    
+    // Inicializar contadores
+    updateCharCount('nome', 200);
+    updateCharCount('descricao', 1000);
+    
+    // Validação do formulário
+    document.getElementById('campanhaForm').addEventListener('submit', function(e) {
+        const nome = document.getElementById('nome').value.trim();
+        const descricao = document.getElementById('descricao').value.trim();
+        const sistema = document.getElementById('sistema_jogo').value;
+        
+        if (!nome || !descricao || !sistema) {
+            e.preventDefault();
+            alert('Por favor, preencha todos os campos obrigatórios.');
+            return false;
+        }
+        
+        // Mostrar loading
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
+    });
+});
+</script>
+{% endblock %}

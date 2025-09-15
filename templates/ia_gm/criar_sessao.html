@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Sessão IA GM - Unified Chronicles{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'ia_gm:painel' %}" class="btn btn-outline-light me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-robot me-2 text-primary"></i>
+                        Nova Sessão do Arquiteto de Mundos
+                    </h2>
+                    <p class="text-muted mb-0">Configure a IA para conduzir uma sessão épica</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Configurações da Sessão
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Informações Básicas -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Informações Básicas
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">Nome da Sessão</label>
+                                <input type="text" class="form-control" name="nome_sessao" 
+                                       placeholder="Ex: A Taverna Misteriosa" required>
+                                <div class="form-text">
+                                    Dê um título memorável para esta sessão
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Campanha</label>
+                                <div class="d-flex align-items-center p-2 bg-dark rounded">
+                                    <i class="fas fa-flag text-primary me-2"></i>
+                                    <strong>{{ campanha.nome }}</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Descrição/Contexto (Opcional)</label>
+                                <textarea class="form-control" name="descricao" rows="3"
+                                          placeholder="Descreva o que planeja para esta sessão, onde os personagens estão, o que aconteceu recentemente..."></textarea>
+                                <div class="form-text">
+                                    A IA usará essas informações para contextualizar suas respostas
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personalidade da IA -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-success mb-3">
+                                    <i class="fas fa-theater-masks me-2"></i>Personalidade da IA
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Estilo Narrativo</label>
+                                <select class="form-select" name="estilo_narrativo">
+                                    {% for value, label in estilos_narrativos %}
+                                        <option value="{{ value }}" {% if value == 'EPICO' %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Como a IA deve narrar e descrever as situações
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    Nível de Criatividade 
+                                    <span class="badge bg-info" id="criatividade-valor">7</span>
+                                </label>
+                                <input type="range" class="form-range" name="nivel_criatividade" 
+                                       min="1" max="10" value="7" id="criatividade-slider">
+                                <div class="d-flex justify-content-between small text-muted">
+                                    <span>1 - Conservadora</span>
+                                    <span>10 - Muito Criativa</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    Nível de Dificuldade 
+                                    <span class="badge bg-warning" id="dificuldade-valor">5</span>
+                                </label>
+                                <input type="range" class="form-range" name="nivel_dificuldade" 
+                                       min="1" max="10" value="5" id="dificuldade-slider">
+                                <div class="d-flex justify-content-between small text-muted">
+                                    <span>1 - Casual</span>
+                                    <span>10 - Desafiadora</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personalização Avançada -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-warning mb-3">
+                                    <i class="fas fa-sliders-h me-2"></i>Configurações Avançadas
+                                </h6>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="accordion" id="configAvancadas">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" 
+                                                    data-bs-toggle="collapse" data-bs-target="#collapseConfig">
+                                                <i class="fas fa-cogs me-2"></i>
+                                                Personalização da IA (Opcional)
+                                            </button>
+                                        </h2>
+                                        <div id="collapseConfig" class="accordion-collapse collapse">
+                                            <div class="accordion-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="foco_roleplay" id="focoRoleplay" checked>
+                                                            <label class="form-check-label" for="focoRoleplay">
+                                                                Enfatizar Roleplay
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            Priorizar interpretação e desenvolvimento de personagens
+                                                        </small>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="foco_combate" id="focoCombate">
+                                                            <label class="form-check-label" for="focoCombate">
+                                                                Enfatizar Combate
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            Incluir mais situações de combate e ação
+                                                        </small>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="foco_exploracao" id="focoExploracao" checked>
+                                                            <label class="form-check-label" for="focoExploracao">
+                                                                Enfatizar Exploração
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            Focar em descobertas e mistérios
+                                                        </small>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                   name="foco_social" id="focoSocial">
+                                                            <label class="form-check-label" for="focoSocial">
+                                                                Enfatizar Interações Sociais
+                                                            </label>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            Incluir mais NPCs e situações sociais
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview das Configurações -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-eye me-2"></i>Preview das Configurações</h6>
+                            <div id="config-preview">
+                                <p class="mb-2">
+                                    <strong>A IA será:</strong> 
+                                    <span id="preview-estilo">Épica e grandiosa</span>
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Criatividade:</strong> 
+                                    <span id="preview-criatividade">Balanceada (7/10)</span>
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Dificuldade:</strong> 
+                                    <span id="preview-dificuldade">Moderada (5/10)</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'ia_gm:painel' %}" class="btn btn-outline-light">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-play me-2"></i>Iniciar Sessão
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Atualizar valores dos sliders em tempo real
+    document.addEventListener('DOMContentLoaded', function() {
+        const criatividadeSlider = document.getElementById('criatividade-slider');
+        const criatividadeValor = document.getElementById('criatividade-valor');
+        const criatividadePreview = document.getElementById('preview-criatividade');
+        
+        const dificuldadeSlider = document.getElementById('dificuldade-slider');
+        const dificuldadeValor = document.getElementById('dificuldade-valor');
+        const dificuldadePreview = document.getElementById('preview-dificuldade');
+        
+        const estiloSelect = document.querySelector('select[name="estilo_narrativo"]');
+        const estiloPreview = document.getElementById('preview-estilo');
+        
+        // Atualizar criatividade
+        criatividadeSlider.addEventListener('input', function() {
+            const valor = this.value;
+            criatividadeValor.textContent = valor;
+            
+            let descricao = '';
+            if (valor <= 3) descricao = `Conservadora (${valor}/10)`;
+            else if (valor <= 7) descricao = `Balanceada (${valor}/10)`;
+            else descricao = `Muito Criativa (${valor}/10)`;
+            
+            criatividadePreview.textContent = descricao;
+        });
+        
+        // Atualizar dificuldade
+        dificuldadeSlider.addEventListener('input', function() {
+            const valor = this.value;
+            dificuldadeValor.textContent = valor;
+            
+            let descricao = '';
+            if (valor <= 3) descricao = `Casual (${valor}/10)`;
+            else if (valor <= 7) descricao = `Moderada (${valor}/10)`;
+            else descricao = `Desafiadora (${valor}/10)`;
+            
+            dificuldadePreview.textContent = descricao;
+        });
+        
+        // Atualizar estilo
+        estiloSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            estiloPreview.textContent = selectedOption.text;
+        });
+        
+        // Animação de entrada
+        document.querySelector('.card').style.opacity = '0';
+        document.querySelector('.card').style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            document.querySelector('.card').style.transition = 'all 0.3s ease';
+            document.querySelector('.card').style.opacity = '1';
+            document.querySelector('.card').style.transform = 'translateY(0)';
+        }, 100);
+    });
+    
+    // Confirmação antes de sair
+    let formModificado = false;
+    
+    document.querySelectorAll('input, select, textarea').forEach(field => {
+        field.addEventListener('change', () => {
+            formModificado = true;
+        });
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (formModificado) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    
+    // Remover aviso ao submeter
+    document.querySelector('form').addEventListener('submit', () => {
+        formModificado = false;
+    });
+</script>
+{% endblock %}

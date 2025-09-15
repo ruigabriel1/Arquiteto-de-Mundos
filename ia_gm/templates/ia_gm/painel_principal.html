@@ -1,0 +1,375 @@
+{% extends 'ia_gm/base_ia.html' %}
+{% load static %}
+
+{% block title %}Arquiteto de Mundos - Painel Principal{% endblock %}
+
+{% block ia_content %}
+<div class="row">
+    <!-- Estatísticas Gerais -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card ia-card estatisticas-card">
+            <div class="card-body">
+                <div class="estatisticas-numero">{{ estatisticas.total_sessoes }}</div>
+                <div class="text-muted">
+                    <i class="fas fa-brain me-1"></i>
+                    Sessões de IA
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card ia-card estatisticas-card">
+            <div class="card-body">
+                <div class="estatisticas-numero">{{ estatisticas.total_npcs }}</div>
+                <div class="text-muted">
+                    <i class="fas fa-users me-1"></i>
+                    NPCs Criados
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card ia-card estatisticas-card">
+            <div class="card-body">
+                <div class="estatisticas-numero">{{ estatisticas.total_locais }}</div>
+                <div class="text-muted">
+                    <i class="fas fa-map me-1"></i>
+                    Locais Explorados
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card ia-card estatisticas-card">
+            <div class="card-body">
+                <div class="estatisticas-numero">{{ estatisticas.total_missoes }}</div>
+                <div class="text-muted">
+                    <i class="fas fa-scroll me-1"></i>
+                    Missões Geradas
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Campanhas Disponíveis -->
+    <div class="col-lg-8 mb-4">
+        <div class="card ia-card">
+            <div class="card-header d-flex align-items-center">
+                <h5 class="mb-0 flex-grow-1">
+                    <i class="fas fa-dice-d20 me-2"></i>
+                    Suas Campanhas
+                </h5>
+                <span class="badge bg-secondary">{{ campanhas.count }} ativas</span>
+            </div>
+            <div class="card-body">
+                {% if campanhas %}
+                    <div class="row g-4">
+                        {% for campanha in campanhas %}
+                        <div class="col-md-6">
+                            <div class="card border">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start mb-3">
+                                        <div class="flex-shrink-0">
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="fas fa-dice-d20"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">{{ campanha.nome }}</h6>
+                                            <small class="text-muted">{{ campanha.sistema|default:"Sistema não especificado" }}</small>
+                                            <div class="mt-2">
+                                                {% if campanha.mestre == user %}
+                                                    <span class="badge bg-success">Mestre</span>
+                                                {% else %}
+                                                    <span class="badge bg-info">Jogador</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <p class="text-muted small mb-3">
+                                        {{ campanha.descricao|truncatechars:100|default:"Sem descrição disponível." }}
+                                    </p>
+                                    
+                                    <!-- Estatísticas da campanha -->
+                                    <div class="row text-center mb-3">
+                                        <div class="col-4">
+                                            <div class="small">
+                                                <strong>{{ campanha.jogadores.count }}</strong>
+                                                <div class="text-muted">Jogadores</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="small">
+                                                <strong>{{ campanha.sessaogm_set.count }}</strong>
+                                                <div class="text-muted">Sessões IA</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="small">
+                                                <strong>
+                                                    {% if campanha.data_ultima_sessao %}
+                                                        {{ campanha.data_ultima_sessao|timesince }}
+                                                    {% else %}
+                                                        Nunca
+                                                    {% endif %}
+                                                </strong>
+                                                <div class="text-muted">Última sessão</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex gap-2">
+                                        {% if campanha.mestre == user %}
+                                            <a href="{% url 'ia_gm:criar_sessao' campanha.id %}" class="btn btn-ia btn-sm flex-fill">
+                                                <i class="fas fa-plus me-1"></i>
+                                                Nova Sessão IA
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'campanha:detalhes' campanha.id %}" class="btn btn-outline-primary btn-sm flex-fill">
+                                            <i class="fas fa-eye me-1"></i>
+                                            Ver Campanha
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-dice-d20 text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-3">Nenhuma campanha encontrada</h5>
+                        <p class="text-muted">Crie ou participe de uma campanha para começar a usar o Arquiteto de Mundos.</p>
+                        <a href="{% url 'campanha:criar' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Criar Nova Campanha
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sessões Recentes -->
+    <div class="col-lg-4 mb-4">
+        <div class="card ia-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Sessões Recentes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if sessoes_recentes %}
+                    {% for sessao in sessoes_recentes %}
+                    <div class="d-flex align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle {% if sessao.status == 'ATIVA' %}bg-success{% elif sessao.status == 'PAUSADA' %}bg-warning{% else %}bg-secondary{% endif %} text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 35px; height: 35px;">
+                                <i class="fas fa-brain" style="font-size: 0.8rem;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1">{{ sessao.nome_sessao }}</h6>
+                            <small class="text-muted">{{ sessao.campanha.nome }}</small>
+                            <div class="mt-1">
+                                <small class="text-muted">{{ sessao.data_criacao|timesince }} atrás</small>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            {% if sessao.status == 'ATIVA' %}
+                                <a href="{% url 'ia_gm:sessao' sessao.id %}" class="btn btn-sm btn-ia">
+                                    <i class="fas fa-play"></i>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'ia_gm:sessao' sessao.id %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if sessoes_recentes|length >= 10 %}
+                    <div class="text-center">
+                        <small class="text-muted">Mostrando as 10 sessões mais recentes</small>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-brain text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-3 mb-0">Nenhuma sessão ainda</p>
+                        <small class="text-muted">Crie uma sessão de IA para começar</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Dicas e Informações -->
+        <div class="card ia-card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Dicas do Arquiteto
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-primary">
+                        <i class="fas fa-magic me-1"></i>
+                        Filosofia "Sim, e..."
+                    </h6>
+                    <small class="text-muted">
+                        O Arquiteto nunca diz "não" diretamente. Use a ferramenta de ações "impossíveis" para transformar ideias criativas em oportunidades narrativas.
+                    </small>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-success">
+                        <i class="fas fa-users me-1"></i>
+                        NPCs com Alma
+                    </h6>
+                    <small class="text-muted">
+                        Cada NPC gerado tem motivação, falha e segredo únicos. Use o gerador de diálogos para manter a personalidade consistente.
+                    </small>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-info">
+                        <i class="fas fa-brain me-1"></i>
+                        Memória Persistente
+                    </h6>
+                    <small class="text-muted">
+                        O sistema lembra de tudo! Registre eventos importantes para que a IA crie consequências e conexões narrativas.
+                    </small>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#dicasModal">
+                        <i class="fas fa-question-circle me-1"></i>
+                        Ver Mais Dicas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal com mais dicas -->
+<div class="modal fade" id="dicasModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Guia do Arquiteto de Mundos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="accordion" id="dicasAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading1">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                🎭 Como Criar NPCs Memoráveis
+                            </button>
+                        </h2>
+                        <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#dicasAccordion">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li><strong>Seja específico na situação:</strong> "Um ferreiro suspeito que esconde algo" gera melhores resultados que "um NPC qualquer"</li>
+                                    <li><strong>Use o histórico:</strong> Mencione personagens dos jogadores na descrição</li>
+                                    <li><strong>Aproveite os segredos:</strong> Todo NPC tem um segredo - use isso para criar plots futuros</li>
+                                    <li><strong>Mantenha a consistência:</strong> Use sempre o gerador de diálogos do mesmo NPC</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading2">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                🏰 Criando Locais Imersivos
+                            </button>
+                        </h2>
+                        <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#dicasAccordion">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li><strong>Pense nos cinco sentidos:</strong> A IA cria descrições que envolvem visão, som, cheiro, tato e paladar</li>
+                                    <li><strong>Todo lugar tem história:</strong> Cada local gerado vem com um passado rico</li>
+                                    <li><strong>Conecte com a campanha:</strong> Mencione eventos passados da campanha na descrição</li>
+                                    <li><strong>Explore os segredos:</strong> Cada local tem mistérios escondidos</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading3">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                ⚔️ Processando Ações dos Jogadores
+                            </button>
+                        </h2>
+                        <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#dicasAccordion">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li><strong>"Sim, e...":</strong> Use sempre que um jogador tentar algo criativo</li>
+                                    <li><strong>Ações impossíveis:</strong> Transforme tentativas "impossíveis" em momentos épicos</li>
+                                    <li><strong>Consequências interessantes:</strong> Toda ação tem resultado, mas nem sempre o esperado</li>
+                                    <li><strong>Registre eventos:</strong> Marque momentos importantes para futuras consequências</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading4">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                                🧠 Aproveitando a Memória da IA
+                            </button>
+                        </h2>
+                        <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#dicasAccordion">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li><strong>Registre tudo importante:</strong> Mortes, alianças, segredos descobertos</li>
+                                    <li><strong>Use as oportunidades:</strong> A IA sugere quando retomar threads abandonadas</li>
+                                    <li><strong>Analise personagens:</strong> Veja padrões e desenvolvimento dos PCs</li>
+                                    <li><strong>Gere consequências:</strong> Transforme ações passadas em plots atuais</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Adiciona funcionalidades específicas do painel
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Painel Principal do Arquiteto de Mundos carregado');
+    
+    // Destacar campanhas com sessões ativas
+    const sessoesAtivas = document.querySelectorAll('.badge.bg-success');
+    sessoesAtivas.forEach(badge => {
+        if (badge.textContent.includes('Ativa')) {
+            badge.closest('.card').classList.add('border-success');
+        }
+    });
+});
+</script>
+{% endblock %}

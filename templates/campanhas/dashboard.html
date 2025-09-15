@@ -1,0 +1,659 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard de Campanhas - Unified Chronicles{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, rgba(111, 66, 193, 0.1) 0%, rgba(45, 27, 105, 0.1) 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .campaign-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .campaign-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(111, 66, 193, 0.5);
+        box-shadow: 0 15px 35px rgba(111, 66, 193, 0.2);
+    }
+    
+    .campaign-header {
+        background: linear-gradient(135deg, #6f42c1, #2d1b69);
+        padding: 1rem;
+        color: white;
+        position: relative;
+    }
+    
+    .campaign-status {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #28a745;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+    }
+    
+    .campaign-status.paused {
+        background: #ffc107;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+    }
+    
+    .campaign-status.completed {
+        background: #6c757d;
+        box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.3);
+    }
+    
+    .quick-stats {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-item {
+        text-align: center;
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #6f42c1;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .action-buttons {
+        padding: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-campaign-action {
+        flex: 1;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .floating-add {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6f42c1, #2d1b69);
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        box-shadow: 0 5px 20px rgba(111, 66, 193, 0.4);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .floating-add:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(111, 66, 193, 0.5);
+        color: white;
+    }
+    
+    .recent-activity {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 1.5rem;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        transition: background 0.3s ease;
+    }
+    
+    .activity-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .filter-tabs {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 0.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .filter-tab {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: none;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .filter-tab.active {
+        background: linear-gradient(135deg, #6f42c1, #2d1b69);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(111, 66, 193, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: rgba(111, 66, 193, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .campaign-card {
+            margin-bottom: 1rem;
+        }
+        
+        .quick-stats {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header do Dashboard -->
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="mb-2">
+                    <i class="fas fa-crown me-3 text-warning"></i>
+                    Dashboard do Mestre
+                </h1>
+                <p class="text-muted mb-0">
+                    Gerencie suas campanhas, acompanhe o progresso dos jogadores e acesse o poder da IA
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="d-flex gap-2 justify-content-lg-end">
+                    <button class="btn btn-outline-primary" onclick="abrirGuiaRapido()">
+                        <i class="fas fa-question-circle me-2"></i>Guia Rápido
+                    </button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaCampanha">
+                        <i class="fas fa-plus me-2"></i>Nova Campanha
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Painel Principal -->
+        <div class="col-lg-8">
+            <!-- Filtros -->
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="todas" onclick="filtrarCampanhas('todas')">
+                    <i class="fas fa-th-large me-2"></i>Todas
+                </button>
+                <button class="filter-tab" data-filter="ativas" onclick="filtrarCampanhas('ativas')">
+                    <i class="fas fa-play me-2"></i>Ativas
+                </button>
+                <button class="filter-tab" data-filter="pausadas" onclick="filtrarCampanhas('pausadas')">
+                    <i class="fas fa-pause me-2"></i>Pausadas
+                </button>
+                <button class="filter-tab" data-filter="concluidas" onclick="filtrarCampanhas('concluidas')">
+                    <i class="fas fa-check me-2"></i>Concluídas
+                </button>
+            </div>
+
+            <!-- Grid de Campanhas -->
+            <div class="row" id="campanhas-grid">
+                <!-- Campanha 1 - Ativa -->
+                <div class="col-md-6 col-xl-4 mb-4 campaign-item" data-status="ativa">
+                    <div class="campaign-card">
+                        <div class="campaign-header">
+                            <div class="campaign-status"></div>
+                            <h5 class="mb-1">A Lenda de Drakmoor</h5>
+                            <small class="opacity-75">D&D 5e • Nível 1-10</small>
+                        </div>
+                        
+                        <div class="p-3">
+                            <p class="text-muted small mb-3">
+                                Uma épica jornada através das terras sombrias de Drakmoor, 
+                                onde heróis enfrentam dragões ancestrais...
+                            </p>
+                            
+                            <div class="quick-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">4</div>
+                                    <div class="stat-label">Jogadores</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">12</div>
+                                    <div class="stat-label">Sessões</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">Nv.5</div>
+                                    <div class="stat-label">Média</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn btn-primary btn-campaign-action" onclick="iniciarSessaoIA(1)">
+                                <i class="fas fa-robot me-1"></i>IA GM
+                            </button>
+                            <button class="btn btn-outline-light btn-campaign-action" onclick="verCampanha(1)">
+                                <i class="fas fa-eye me-1"></i>Ver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campanha 2 - Pausada -->
+                <div class="col-md-6 col-xl-4 mb-4 campaign-item" data-status="pausada">
+                    <div class="campaign-card">
+                        <div class="campaign-header">
+                            <div class="campaign-status paused"></div>
+                            <h5 class="mb-1">Piratas do Arquipélago</h5>
+                            <small class="opacity-75">Sistema Próprio • Nível 1-8</small>
+                        </div>
+                        
+                        <div class="p-3">
+                            <p class="text-muted small mb-3">
+                                Aventuras marítimas repletas de tesouros escondidos, 
+                                batalhas navais épicas e mistérios profundos...
+                            </p>
+                            
+                            <div class="quick-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">3</div>
+                                    <div class="stat-label">Jogadores</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">8</div>
+                                    <div class="stat-label">Sessões</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">Nv.3</div>
+                                    <div class="stat-label">Média</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn btn-success btn-campaign-action" onclick="retomarCampanha(2)">
+                                <i class="fas fa-play me-1"></i>Retomar
+                            </button>
+                            <button class="btn btn-outline-light btn-campaign-action" onclick="verCampanha(2)">
+                                <i class="fas fa-eye me-1"></i>Ver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card de Nova Campanha -->
+                <div class="col-md-6 col-xl-4 mb-4 campaign-item" data-status="todas">
+                    <div class="campaign-card" style="border: 2px dashed rgba(111, 66, 193, 0.5);">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
+                            <h5>Nova Campanha</h5>
+                            <p class="small text-muted mb-3">
+                                Crie uma nova campanha e comece sua próxima aventura épica
+                            </p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaCampanha">
+                                <i class="fas fa-magic me-2"></i>Criar Agora
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado Vazio -->
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <div class="empty-state-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h4>Nenhuma campanha encontrada</h4>
+                <p>Não há campanhas que correspondam ao filtro selecionado.</p>
+            </div>
+        </div>
+
+        <!-- Painel Lateral -->
+        <div class="col-lg-4">
+            <!-- Estatísticas Rápidas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Estatísticas Gerais
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="stat-number text-primary">2</div>
+                            <div class="stat-label">Campanhas Ativas</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="stat-number text-success">7</div>
+                            <div class="stat-label">Jogadores Únicos</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-number text-warning">20</div>
+                            <div class="stat-label">Sessões Totais</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-number text-info">156</div>
+                            <div class="stat-label">Horas Jogadas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Atividade Recente -->
+            <div class="recent-activity mb-4">
+                <h6 class="mb-3">
+                    <i class="fas fa-clock me-2"></i>Atividade Recente
+                </h6>
+                
+                <div class="activity-item">
+                    <div class="activity-icon bg-primary">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">Sessão IA Concluída</div>
+                        <small class="text-muted">A Lenda de Drakmoor • 2h atrás</small>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon bg-success">
+                        <i class="fas fa-user-plus text-white"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">Novo Jogador</div>
+                        <small class="text-muted">Marina se juntou à campanha • 1 dia atrás</small>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon bg-warning">
+                        <i class="fas fa-level-up-alt text-white"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">Personagem Evoluiu</div>
+                        <small class="text-muted">Thorin atingiu o nível 6 • 3 dias atrás</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Ações Rápidas
+                    </h6>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <button class="btn btn-primary" onclick="iniciarSessaoRapida()">
+                        <i class="fas fa-zap me-2"></i>Sessão Rápida com IA
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="gerarConteudo()">
+                        <i class="fas fa-magic me-2"></i>Gerar Conteúdo
+                    </button>
+                    <button class="btn btn-outline-success" onclick="analisarJogadores()">
+                        <i class="fas fa-user-chart me-2"></i>Analisar Jogadores
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="exportarCampanha()">
+                        <i class="fas fa-download me-2"></i>Exportar Campanha
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<button class="floating-add" data-bs-toggle="modal" data-bs-target="#modalNovaCampanha">
+    <i class="fas fa-plus"></i>
+</button>
+
+<!-- Modal Nova Campanha -->
+<div class="modal fade" id="modalNovaCampanha" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Criar Nova Campanha
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNovaCampanha">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Nome da Campanha</label>
+                            <input type="text" class="form-control" name="nome" required
+                                   placeholder="Ex: A Coroa dos Dragões">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Sistema</label>
+                            <select class="form-select" name="sistema">
+                                <option value="dnd5e">D&D 5e</option>
+                                <option value="pathfinder">Pathfinder</option>
+                                <option value="tormenta">Tormenta 20</option>
+                                <option value="proprio">Sistema Próprio</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Descrição</label>
+                            <textarea class="form-control" name="descricao" rows="3"
+                                      placeholder="Descreva o tom, tema e premissa da campanha..."></textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nível Inicial</label>
+                            <input type="number" class="form-control" name="nivel_inicial" value="1" min="1" max="20">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Máximo de Jogadores</label>
+                            <input type="number" class="form-control" name="max_jogadores" value="4" min="1" max="8">
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Configuração da IA GM</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Estilo Narrativo</label>
+                                    <select class="form-select form-select-sm" name="estilo_ia">
+                                        <option value="epico">Épico e Grandioso</option>
+                                        <option value="misterioso">Misterioso</option>
+                                        <option value="sombrio">Sombrio</option>
+                                        <option value="heroico">Heroico</option>
+                                        <option value="comico">Cômico</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Nível de Criatividade</label>
+                                    <select class="form-select form-select-sm" name="criatividade_ia">
+                                        <option value="3">Conservadora</option>
+                                        <option value="5">Moderada</option>
+                                        <option value="7" selected>Alta</option>
+                                        <option value="9">Muito Criativa</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="criarCampanha()">
+                    <i class="fas fa-magic me-2"></i>Criar Campanha
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filtros de campanha
+    function filtrarCampanhas(filtro) {
+        // Atualizar tabs ativos
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector(`[data-filter="${filtro}"]`).classList.add('active');
+        
+        // Filtrar cards
+        const campanhas = document.querySelectorAll('.campaign-item');
+        let visibleCount = 0;
+        
+        campanhas.forEach(campanha => {
+            const status = campanha.getAttribute('data-status');
+            if (filtro === 'todas' || status === filtro || status === 'todas') {
+                campanha.style.display = 'block';
+                visibleCount++;
+            } else {
+                campanha.style.display = 'none';
+            }
+        });
+        
+        // Mostrar/ocultar estado vazio
+        document.getElementById('empty-state').style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+    
+    // Ações de campanha
+    function iniciarSessaoIA(campanhaId) {
+        showNotification('Iniciando sessão com IA GM...', 'info');
+        setTimeout(() => {
+            window.location.href = `/arquiteto/campanha/${campanhaId}/criar-sessao/`;
+        }, 1000);
+    }
+    
+    function verCampanha(campanhaId) {
+        window.location.href = `/campanhas/${campanhaId}/`;
+    }
+    
+    function retomarCampanha(campanhaId) {
+        showNotification('Campanha retomada com sucesso!', 'success');
+        // Atualizar status visual
+        document.querySelector(`[data-status="pausada"]`).setAttribute('data-status', 'ativa');
+        const statusDot = document.querySelector(`[data-status="ativa"] .campaign-status`);
+        statusDot.classList.remove('paused');
+    }
+    
+    // Criar campanha
+    function criarCampanha() {
+        const form = document.getElementById('formNovaCampanha');
+        const formData = new FormData(form);
+        
+        // Simular criação
+        showNotification('Criando campanha...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Campanha criada com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalNovaCampanha')).hide();
+            
+            // Recarregar página ou adicionar nova campanha dinamicamente
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }, 2000);
+    }
+    
+    // Ações rápidas
+    function iniciarSessaoRapida() {
+        const campanhasAtivas = document.querySelectorAll('[data-status="ativa"]');
+        if (campanhasAtivas.length > 0) {
+            window.location.href = '/arquiteto/';
+        } else {
+            showNotification('Nenhuma campanha ativa encontrada. Crie ou retome uma campanha primeiro.', 'warning');
+        }
+    }
+    
+    function gerarConteudo() {
+        window.location.href = '/arquiteto/';
+    }
+    
+    function analisarJogadores() {
+        showNotification('Funcionalidade em desenvolvimento', 'info');
+    }
+    
+    function exportarCampanha() {
+        showNotification('Preparando exportação...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Campanha exportada com sucesso!', 'success');
+        }, 2000);
+    }
+    
+    function abrirGuiaRapido() {
+        showNotification('Abrindo guia rápido...', 'info');
+    }
+    
+    // Animações de entrada
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.campaign-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+    });
+</script>
+{% endblock %}

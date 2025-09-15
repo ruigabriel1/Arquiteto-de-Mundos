@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Unified Chronicles - RPG Virtual{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS Global Personalizado -->
+    <link rel="stylesheet" href="/static/css/global-theme.css">
+    
+    <style>
+        :root {
+            --bs-primary: #2d1b69;
+            --bs-secondary: #6f42c1;
+            --bs-dark: #1a1a1a;
+            --bs-light: #f8f9fa;
+            --gradient-primary: linear-gradient(135deg, #2d1b69 0%, #6f42c1 100%);
+            --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #2d1b69 100%);
+        }
+        
+        body {
+            background: var(--gradient-dark);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: rgba(26, 26, 26, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(111, 66, 193, 0.3);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .card-header {
+            background: rgba(111, 66, 193, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn-primary {
+            background: var(--gradient-primary);
+            border: none;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+        }
+        
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--bs-secondary);
+            box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+            color: white;
+        }
+        
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .alert {
+            backdrop-filter: blur(10px);
+            border: none;
+        }
+        
+        .badge {
+            background: var(--gradient-primary) !important;
+        }
+        
+        .list-group-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .list-group-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient-primary);
+            border-radius: 4px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--bs-secondary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .chat-container {
+            height: 80vh;
+            overflow-y: auto;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .message {
+            padding: 15px;
+            margin: 10px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .message.user {
+            background: rgba(45, 27, 105, 0.8);
+            margin-left: 20%;
+            text-align: right;
+        }
+        
+        .message.ai {
+            background: rgba(111, 66, 193, 0.8);
+            margin-right: 20%;
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+        
+        .stats-card {
+            transition: transform 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Modern Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(111, 66, 193, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6f42c1, #2d1b69);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+        }
+        
+        .sidebar-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+            transition: opacity 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-title {
+            opacity: 0;
+            width: 0;
+        }
+        
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            margin-bottom: 0.25rem;
+            border-radius: 0 25px 25px 0;
+            margin-right: 1rem;
+        }
+        
+        .sidebar-item:hover {
+            background: rgba(111, 66, 193, 0.3);
+            color: white;
+        }
+        
+        .sidebar-item.active {
+            background: rgba(111, 66, 193, 0.4);
+            color: white;
+            border-left: 3px solid #6f42c1;
+        }
+        
+        .sidebar-item.active .sidebar-badge {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(90deg, rgba(111, 66, 193, 0.2), transparent);
+            border-right: 3px solid #6f42c1;
+            color: white;
+        }
+        
+        .sidebar-item.featured {
+            background: linear-gradient(90deg, rgba(111, 66, 193, 0.1), transparent);
+            border-left: 3px solid #6f42c1;
+        }
+        
+        .sidebar-item i {
+            font-size: 1.1rem;
+            margin-right: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-item span {
+            transition: opacity 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-item span {
+            opacity: 0;
+            width: 0;
+        }
+        
+        .sidebar-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            margin-left: auto;
+            font-weight: bold;
+        }
+        
+        .sidebar.collapsed .sidebar-badge {
+            display: none;
+        }
+        
+        .sidebar-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 1rem 1.5rem;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6f42c1, #2d1b69);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 1rem;
+            flex-shrink: 0;
+            font-size: 1.1rem;
+        }
+        
+        .user-details {
+            transition: opacity 0.3s ease;
+        }
+        
+        .sidebar.collapsed .user-details {
+            opacity: 0;
+            width: 0;
+        }
+        
+        /* Garantir que o footer não sobreponha outros elementos */
+        .sidebar-menu {
+            padding-bottom: 160px; /* Espaço para o footer */
+        }
+        
+        .sidebar.collapsed .sidebar-menu {
+            padding-bottom: 140px;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: white;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+        
+        .user-role {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sidebar-item.small {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            margin-right: 0;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+        
+        /* Main Content Wrapper */
+        .main-wrapper {
+            margin-left: 280px;
+            transition: margin-left 0.3s ease;
+            min-height: 100vh;
+        }
+        
+        .main-wrapper.collapsed {
+            margin-left: 70px;
+        }
+        
+        .guest-wrapper {
+            margin-left: 0;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            background: rgba(26, 26, 26, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(111, 66, 193, 0.2);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .breadcrumb-nav {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+        
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 0.5rem;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .btn-icon:hover {
+            background: rgba(111, 66, 193, 0.2);
+            color: white;
+        }
+        
+        .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            border: 2px solid rgba(26, 26, 26, 0.9);
+        }
+        
+        .user-menu-toggle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .user-menu-toggle:hover {
+            color: #6f42c1;
+        }
+        
+        .mobile-menu-toggle {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Modern Sidebar Navigation -->
+    {% if user.is_authenticated %}
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center">
+                <div class="sidebar-logo">
+                    <i class="fas fa-dice-d20"></i>
+                </div>
+                <div class="sidebar-title">Unified Chronicles</div>
+            </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-menu">
+            {% load navigation_tags %}
+            <a href="{% url 'usuarios:index' %}" class="sidebar-item {% if request.resolver_match.url_name == 'index' and request.resolver_match.namespace == 'usuarios' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+            </a>
+            <a href="{% url 'usuarios:dashboard' %}" class="sidebar-item {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.namespace == 'usuarios' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'campanhas:publicas' %}" class="sidebar-item {% if request.resolver_match.namespace == 'campanhas' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Campanhas</span>
+            </a>
+            <a href="{% url 'personagens_web:lista' %}" class="sidebar-item {% if request.resolver_match.namespace == 'personagens_web' %}active{% endif %}">
+                <i class="fas fa-user-circle"></i>
+                <span>Personagens</span>
+            </a>
+            <a href="{% url 'ia_gm:painel' %}" class="sidebar-item featured {% if request.resolver_match.namespace == 'ia_gm' %}active{% endif %}">
+                <i class="fas fa-robot"></i>
+                <span>Arquiteto IA</span>
+                <div class="sidebar-badge">MESTRE</div>
+            </a>
+            
+            <div class="sidebar-divider"></div>
+            
+            <a href="#" class="sidebar-item" onclick="openQuickRoll()">
+                <i class="fas fa-dice-d20"></i>
+                <span>Rolagem Rápida</span>
+            </a>
+            <a href="{% url 'usuarios:perfil' %}" class="sidebar-item">
+                <i class="fas fa-user-cog"></i>
+                <span>Perfil</span>
+            </a>
+            <a href="{% url 'usuarios:configuracoes' %}" class="sidebar-item">
+                <i class="fas fa-cog"></i>
+                <span>Configurações</span>
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">{{ user.nome_completo|default:user.username }}</div>
+                    <div class="user-role">
+                        {% if user.is_superuser %}
+                            Administrador
+                        {% elif user.is_staff %}
+                            Mestre
+                        {% else %}
+                            Jogador
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <form method="post" action="{% url 'usuarios:logout' %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="sidebar-item small" style="background: none; border: none; width: 100%; text-align: left;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sair</span>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <button class="mobile-menu-toggle d-lg-none" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="breadcrumb-nav">
+                {% load navigation_tags %}
+                {% show_breadcrumbs %}
+            </div>
+            
+            <div class="top-bar-actions">
+                <button class="btn-icon" onclick="openQuickRoll()" title="Rolagem Rápida">
+                    <i class="fas fa-dice-d20"></i>
+                </button>
+                <button class="btn-icon" onclick="toggleNotifications()" title="Notificações">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+                <div class="user-menu-toggle" onclick="toggleUserMenu()">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    {% else %}
+    <!-- Guest Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-dice-d20 me-2"></i>
+                Unified Chronicles
+            </a>
+            
+            <div class="ms-auto">
+                <a class="btn btn-outline-light me-2" href="/admin/">Login</a>
+                <a class="btn btn-primary" href="/admin/">Começar</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="main-wrapper guest-wrapper">
+    {% endif %}
+
+    <!-- Mensagens de Sistema -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+        <!-- Conteúdo Principal -->
+        <main class="container-fluid py-4">
+            {% block content %}{% endblock %}
+        </main>
+    </div> <!-- Fecha main-wrapper -->
+    
+    <!-- Quick Roll Modal -->
+    <div class="modal fade" id="quickRollModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">
+                        <i class="fas fa-dice-d20 me-2"></i>Rolagem Rápida
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Fórmula de Dados</label>
+                        <input type="text" class="form-control" id="diceFormula" 
+                               placeholder="Ex: 1d20+5, 3d6, 2d8+3" value="1d20">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Modificadores</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <input type="number" class="form-control" id="diceModifier" 
+                                       placeholder="+/-" value="0">
+                            </div>
+                            <div class="col-6">
+                                <select class="form-select" id="advantageType">
+                                    <option value="normal">Normal</option>
+                                    <option value="advantage">Vantagem</option>
+                                    <option value="disadvantage">Desvantagem</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="rollResult" class="text-center py-3" style="display: none;">
+                        <h3 class="text-primary">Resultado: <span id="resultValue">--</span></h3>
+                        <p class="text-muted" id="rollDetails">--</p>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" onclick="executeRoll()">
+                        <i class="fas fa-dice-d20 me-2"></i>Rolar Dados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-white-50 py-3 mt-5">
+        <div class="container">
+            <p>&copy; 2025 Unified Chronicles - RPG Virtual com IA. 
+               <span class="badge bg-secondary ms-2">Arquiteto de Mundos v2.0</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Utilitários JavaScript -->
+    <script>
+        // Função para mostrar/esconder loading
+        function showLoading(element) {
+            const originalText = element.innerHTML;
+            element.innerHTML = '<span class="loading me-2"></span>Processando...';
+            element.disabled = true;
+            return originalText;
+        }
+        
+        function hideLoading(element, originalText) {
+            element.innerHTML = originalText;
+            element.disabled = false;
+        }
+        
+        // Função para fazer requisições AJAX
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                throw error;
+            }
+        }
+        
+        // Função para mostrar notificações
+        function showNotification(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '100px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Remove após 5 segundos
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // Auto-hide alerts após 5 segundos
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert:not(.alert-important)');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            });
+            
+            // Inicializar sidebar
+            initializeSidebar();
+        });
+        
+        // Funções do Sidebar
+        function initializeSidebar() {
+            // Destacar item ativo baseado na URL
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Atualizar breadcrumb
+            updateBreadcrumb();
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('mainWrapper');
+            
+            if (window.innerWidth <= 1024) {
+                // Mobile: toggle visibility
+                sidebar.classList.toggle('open');
+            } else {
+                // Desktop: toggle collapsed state
+                sidebar.classList.toggle('collapsed');
+                mainWrapper.classList.toggle('collapsed');
+            }
+        }
+        
+        function updateBreadcrumb() {
+            const path = window.location.pathname;
+            const breadcrumb = document.getElementById('current-page');
+            
+            if (breadcrumb) {
+                const pathMap = {
+                    '/': 'Início',
+                    '/campanhas/dashboard/': 'Dashboard',
+                    '/campanhas/': 'Campanhas',
+                    '/personagens/': 'Personagens',
+                    '/arquiteto/': 'Arquiteto de Mundos'
+                };
+                
+                breadcrumb.textContent = pathMap[path] || 'Unified Chronicles';
+            }
+        }
+        
+        function openQuickRoll() {
+            new bootstrap.Modal(document.getElementById('quickRollModal')).show();
+        }
+        
+        function executeRoll() {
+            const formula = document.getElementById('diceFormula').value;
+            const modifier = parseInt(document.getElementById('diceModifier').value) || 0;
+            const advantageType = document.getElementById('advantageType').value;
+            
+            try {
+                const result = rollDice(formula, modifier, advantageType);
+                
+                document.getElementById('resultValue').textContent = result.total;
+                document.getElementById('rollDetails').textContent = result.details;
+                document.getElementById('rollResult').style.display = 'block';
+                
+            } catch (error) {
+                showNotification('Fórmula de dados inválida', 'error');
+            }
+        }
+        
+        function rollDice(formula, modifier = 0, advantageType = 'normal') {
+            // Parser simples de dados
+            const match = formula.match(/(\d+)d(\d+)([\+\-]\d+)?/i);
+            if (!match) {
+                throw new Error('Fórmula inválida');
+            }
+            
+            const numDice = parseInt(match[1]);
+            const sides = parseInt(match[2]);
+            const formulaModifier = parseInt(match[3] || 0);
+            const totalModifier = modifier + formulaModifier;
+            
+            let rolls = [];
+            
+            // Rolar dados
+            for (let i = 0; i < numDice; i++) {
+                if (advantageType === 'advantage' && sides === 20) {
+                    const roll1 = Math.floor(Math.random() * sides) + 1;
+                    const roll2 = Math.floor(Math.random() * sides) + 1;
+                    rolls.push(Math.max(roll1, roll2));
+                } else if (advantageType === 'disadvantage' && sides === 20) {
+                    const roll1 = Math.floor(Math.random() * sides) + 1;
+                    const roll2 = Math.floor(Math.random() * sides) + 1;
+                    rolls.push(Math.min(roll1, roll2));
+                } else {
+                    rolls.push(Math.floor(Math.random() * sides) + 1);
+                }
+            }
+            
+            const rollSum = rolls.reduce((a, b) => a + b, 0);
+            const total = rollSum + totalModifier;
+            
+            let details = `Dados: [${rolls.join(', ')}]`;
+            if (totalModifier !== 0) {
+                details += ` ${totalModifier >= 0 ? '+' : ''}${totalModifier}`;
+            }
+            if (advantageType !== 'normal') {
+                details += ` (${advantageType === 'advantage' ? 'Vantagem' : 'Desvantagem'})`;
+            }
+            
+            return { total, details };
+        }
+        
+        function toggleNotifications() {
+            showNotification('Funcionalidade em desenvolvimento', 'info');
+        }
+        
+        function toggleUserMenu() {
+            // Implementar menu de usuário futuramente
+            showNotification('Menu de usuário em desenvolvimento', 'info');
+        }
+        
+        // Responsividade
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 1024 && sidebar) {
+                sidebar.classList.remove('open');
+            }
+        });
+        
+        // Fechar sidebar ao clicar fora (mobile)
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileToggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (window.innerWidth <= 1024 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(e.target) && !mobileToggle?.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

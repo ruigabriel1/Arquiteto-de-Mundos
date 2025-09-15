@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # Banco de Dados PostgreSQL
+  db:
+    image: postgres:15
+    container_name: unified_chronicles_db
+    environment:
+      POSTGRES_DB: unified_chronicles
+      POSTGRES_USER: uc_user
+      POSTGRES_PASSWORD: uc_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - unified_network
+
+  # Redis para Cache e WebSocket
+  redis:
+    image: redis:7-alpine
+    container_name: unified_chronicles_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - unified_network
+
+  # Aplicação Django
+  web:
+    build: .
+    container_name: unified_chronicles_web
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://uc_user:uc_password@db:5432/unified_chronicles
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - .:/app
+      - media_files:/app/media
+    depends_on:
+      - db
+      - redis
+    networks:
+      - unified_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # Celery Worker para Tarefas Assíncronas
+  celery:
+    build: .
+    container_name: unified_chronicles_celery
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://uc_user:uc_password@db:5432/unified_chronicles
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    networks:
+      - unified_network
+    command: celery -A unified_chronicles worker -l info
+
+  # Celery Beat para Tarefas Periódicas
+  celery-beat:
+    build: .
+    container_name: unified_chronicles_beat
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://uc_user:uc_password@db:5432/unified_chronicles
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    networks:
+      - unified_network
+    command: celery -A unified_chronicles beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_files:
+
+networks:
+  unified_network:
+    driver: bridge

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salas de Chat - Unified Chronicles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">💬 Salas de Chat</h1>
+                        <p class="text-gray-600">Conecte-se com outros jogadores em tempo real</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-500">Olá, {{ user.get_full_name|default:user.username }}!</span>
+                        <a href="/" class="text-blue-600 hover:text-blue-800">← Voltar ao Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="px-4 py-6 sm:px-0">
+                
+                {% if error %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                    <strong>Erro:</strong> {{ error }}
+                </div>
+                {% endif %}
+                
+                {% if not salas %}
+                <div class="text-center py-12">
+                    <div class="text-gray-400 text-6xl mb-4">💭</div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhuma sala de chat disponível</h3>
+                    <p class="text-gray-500">Você precisa participar de uma campanha para acessar o chat.</p>
+                </div>
+                {% else %}
+                
+                <!-- Grid de Salas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for sala in salas %}
+                    <div class="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow">
+                        <div class="p-6">
+                            <!-- Header da Sala -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <span class="text-blue-600 font-semibold">🎲</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">{{ sala.nome }}</h3>
+                                        <p class="text-sm text-gray-500">{{ sala.campanha.nome }}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Status online -->
+                                {% if sala.participacoes.all %}
+                                    {% with online_count=sala.participacoes.all|length %}
+                                    <div class="flex items-center space-x-1">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span class="text-sm text-gray-600">{{ online_count }} online</span>
+                                    </div>
+                                    {% endwith %}
+                                {% else %}
+                                <div class="flex items-center space-x-1">
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                    <span class="text-sm text-gray-500">Offline</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Descrição -->
+                            {% if sala.descricao %}
+                            <p class="text-gray-600 text-sm mb-4">{{ sala.descricao|truncatechars:100 }}</p>
+                            {% endif %}
+                            
+                            <!-- Info da Campanha -->
+                            <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-500">Sistema:</span>
+                                    <span class="font-medium">{{ sala.campanha.sistema }}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-sm mt-1">
+                                    <span class="text-gray-500">Mestre:</span>
+                                    <span class="font-medium">{{ sala.campanha.mestre.get_full_name|default:sala.campanha.mestre.username }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Configurações da Sala -->
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                {% if sala.comandos_habilitados %}
+                                <span class="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                                    ⚡ Comandos
+                                </span>
+                                {% endif %}
+                                
+                                {% if sala.rolagens_publicas %}
+                                <span class="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                                    🎲 Rolagens Públicas
+                                </span>
+                                {% endif %}
+                                
+                                {% if sala.historico_visivel %}
+                                <span class="inline-flex items-center px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">
+                                    📚 Histórico
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Botões de Ação -->
+                            <div class="flex space-x-2">
+                                <a 
+                                    href="{% url 'mensagens:chat_room' sala.id %}"
+                                    class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+                                >
+                                    Entrar no Chat
+                                </a>
+                                
+                                <button 
+                                    onclick="openRoomInfo({{ sala.id }})"
+                                    class="px-3 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                                    title="Informações da Sala"
+                                >
+                                    ℹ️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Informações da Sala -->
+    <div id="roomInfoModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Informações da Sala</h3>
+                    <button onclick="closeRoomInfo()" class="text-gray-400 hover:text-gray-600">
+                        ✕
+                    </button>
+                </div>
+                
+                <div id="roomInfoContent">
+                    <!-- Conteúdo será carregado via JavaScript -->
+                </div>
+                
+                <div class="mt-4 text-right">
+                    <button 
+                        onclick="closeRoomInfo()"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                    >
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Abrir modal de informações da sala
+        async function openRoomInfo(salaId) {
+            try {
+                const response = await fetch(`/api/mensagens/api/chat/${salaId}/status/`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Erro: ' + data.error);
+                    return;
+                }
+                
+                const content = document.getElementById('roomInfoContent');
+                content.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Nome:</span>
+                            <span class="font-medium">${data.nome}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Participantes Online:</span>
+                            <span class="font-medium text-green-600">${data.participantes_online}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total de Mensagens:</span>
+                            <span class="font-medium">${data.total_mensagens}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Comandos:</span>
+                            <span class="font-medium">${data.comandos_habilitados ? 'Habilitados' : 'Desabilitados'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Status:</span>
+                            <span class="font-medium ${data.status === 'ativo' ? 'text-green-600' : 'text-gray-500'}">
+                                ${data.status === 'ativo' ? '🟢 Ativo' : '⚪ Inativo'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('roomInfoModal').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Erro ao carregar informações:', error);
+                alert('Erro ao carregar informações da sala');
+            }
+        }
+        
+        // Fechar modal
+        function closeRoomInfo() {
+            document.getElementById('roomInfoModal').classList.add('hidden');
+        }
+        
+        // Fechar modal ao clicar fora
+        document.getElementById('roomInfoModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRoomInfo();
+            }
+        });
+        
+        // Atualizar contadores periodicamente
+        setInterval(async function() {
+            // Aqui você pode adicionar lógica para atualizar contadores em tempo real
+            // Por exemplo, fazer polling das APIs para verificar participantes online
+        }, 30000); // A cada 30 segundos
+    </script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+{% extends "usuarios/base_usuarios.html" %}
+
+{% block title %}Dashboard - {{ user.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header do Dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" class="user-avatar me-3" alt="Avatar">
+                    {% else %}
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3 user-avatar">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h1 class="mb-1">Olá, {{ user.nome_completo }}!</h1>
+                        <p class="text-light opacity-75 mb-0">
+                            <span class="user-level-badge me-2">{{ user.nivel_experiencia }}</span>
+                            Membro desde {{ user.date_joined|date:"M Y" }}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <a href="{% url 'usuarios:perfil' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-edit me-1"></i>Perfil
+                    </a>
+                    {% if user.is_staff %}
+                        <a href="/admin/" class="btn btn-outline-warning">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                        <a href="{% url 'ia_gm:painel' %}" class="btn btn-outline-success">
+                            <i class="fas fa-robot me-1"></i>Arquiteto IA
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estatísticas do Usuário -->
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>{{ stats.personagens_count }}</h3>
+            <p><i class="fas fa-user-ninja me-1"></i>Personagens</p>
+        </div>
+        
+        <div class="stat-card">
+            <h3>{{ stats.campanhas_como_jogador }}</h3>
+            <p><i class="fas fa-users me-1"></i>Como Jogador</p>
+        </div>
+        
+        <div class="stat-card">
+            <h3>{{ stats.campanhas_como_mestre }}</h3>
+            <p><i class="fas fa-dice-d20 me-1"></i>Como Mestre</p>
+        </div>
+        
+        <div class="stat-card">
+            <h3>{{ user.horas_jogadas }}</h3>
+            <p><i class="fas fa-clock me-1"></i>Horas Jogadas</p>
+        </div>
+    </div>
+    
+    <!-- Alertas e Convites -->
+    {% if convites_pendentes %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-envelope text-warning me-2"></i>
+                    Convites Pendentes
+                    <span class="invite-badge">{{ convites_pendentes|length }}</span>
+                </h4>
+                
+                {% for convite in convites_pendentes %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-dark">
+                    <div>
+                        <strong class="text-light">{{ convite.campanha.nome }}</strong>
+                        <p class="text-light opacity-75 mb-0">
+                            Convidado por {{ convite.convidado_por.nome_completo }}
+                            • {{ convite.data_convite|timesince }} atrás
+                        </p>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-success me-1">
+                            <i class="fas fa-check me-1"></i>Aceitar
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-times me-1"></i>Recusar
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Sessões Ativas (Se for mestre/admin) -->
+    {% if sessoes_ia_recentes %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-robot text-primary me-2"></i>
+                    Suas Sessões do Arquiteto IA
+                </h4>
+                
+                {% for sessao in sessoes_ia_recentes %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-dark">
+                    <div>
+                        <strong class="text-light">{{ sessao.nome|default:"Sessão sem nome" }}</strong>
+                        <p class="text-light opacity-75 mb-0">
+                            {{ sessao.campanha.nome }} • Criada {{ sessao.data_criacao|timesince }} atrás
+                            {% if sessao.ativa %}
+                                <span class="text-success">• Ativa</span>
+                            {% else %}
+                                <span class="text-warning">• Pausada</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{% url 'ia_gm:sessao' sessao_id=sessao.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-play me-1"></i>Continuar
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'ia_gm:painel' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-1"></i>Nova Sessão IA
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <!-- Campanhas como Jogador -->
+        <div class="col-lg-6 mb-4">
+            <div class="dashboard-card h-100">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-users text-info me-2"></i>
+                    Campanhas (Jogador)
+                </h4>
+                
+                {% if campanhas_recentes %}
+                    <ul class="recent-list">
+                        {% for campanha in campanhas_recentes %}
+                        <li>
+                            <strong>{{ campanha.nome }}</strong>
+                            <br>
+                            <small>
+                                Mestre: {{ campanha.organizador.nome_completo }}
+                                • {{ campanha.sistema_jogo.nome }}
+                                {% if campanha.estado == 'ativa' %}
+                                    <span class="text-success">• Ativa</span>
+                                {% else %}
+                                    <span class="text-warning">• {{ campanha.get_estado_display }}</span>
+                                {% endif %}
+                            </small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'campanhas:publicas' %}" class="btn btn-outline-info">
+                            <i class="fas fa-search me-1"></i>Encontrar Campanhas
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p class="mb-2">Você ainda não está em nenhuma campanha como jogador</p>
+                        <a href="{% url 'campanhas:publicas' %}" class="btn btn-outline-info">
+                            <i class="fas fa-search me-1"></i>Encontrar Campanhas
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Campanhas como Mestre -->
+        <div class="col-lg-6 mb-4">
+            <div class="dashboard-card h-100">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-dice-d20 text-warning me-2"></i>
+                    Campanhas (Mestre)
+                </h4>
+                
+                {% if campanhas_organizadas %}
+                    <ul class="recent-list">
+                        {% for campanha in campanhas_organizadas %}
+                        <li>
+                            <strong>{{ campanha.nome }}</strong>
+                            <br>
+                            <small>
+                                {{ campanha.sistema_jogo.nome }}
+                                • {{ campanha.num_jogadores }}/{{ campanha.max_jogadores }} jogadores
+                                {% if campanha.estado == 'ativa' %}
+                                    <span class="text-success">• Ativa</span>
+                                {% else %}
+                                    <span class="text-warning">• {{ campanha.get_estado_display }}</span>
+                                {% endif %}
+                            </small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'campanhas:criar' %}" class="btn btn-outline-warning">
+                            <i class="fas fa-plus me-1"></i>Nova Campanha
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-dice-d20"></i>
+                        <p class="mb-2">Você ainda não criou nenhuma campanha</p>
+                        {% if user.pode_mestrar %}
+                            <a href="{% url 'campanhas:criar' %}" class="btn btn-outline-warning">
+                                <i class="fas fa-plus me-1"></i>Criar Primeira Campanha
+                            </a>
+                        {% else %}
+                            <p class="mb-2"><small>Você precisa de mais experiência para mestrar ({{ user.horas_jogadas }}/20 horas)</small></p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Personagens -->
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="text-white mb-3">
+                    <i class="fas fa-user-ninja text-success me-2"></i>
+                    Seus Personagens
+                </h4>
+                
+                {% if personagens_recentes %}
+                    <div class="row">
+                        {% for personagem in personagens_recentes %}
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="card bg-dark border-secondary">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        {% if personagem.avatar %}
+                                            <img src="{{ personagem.avatar.url }}" 
+                                                 class="rounded-circle me-2" 
+                                                 style="width: 40px; height: 40px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="card-title mb-0 text-white">{{ personagem.nome }}</h6>
+                                            <small class="text-muted">
+                                                Nível {{ personagem.nivel }}
+                                                {% if personagem.raca %}{{ personagem.raca.nome }}{% endif %}
+                                                {% if personagem.classes.first %}{{ personagem.classes.first.nome }}{% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <p class="card-text text-light opacity-75 small">
+                                        {{ personagem.sistema_jogo.nome }}
+                                    </p>
+                                    <a href="{% url 'personagens_web:detalhes' personagem.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'personagens_web:criar' %}" class="btn btn-outline-success">
+                            <i class="fas fa-plus me-1"></i>Novo Personagem
+                        </a>
+                        <a href="{% url 'personagens_web:lista' %}" class="btn btn-outline-light ms-2">
+                            <i class="fas fa-list me-1"></i>Ver Todos
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-user-ninja"></i>
+                        <p class="mb-2">Você ainda não criou nenhum personagem</p>
+                        <a href="{% url 'personagens_web:criar' %}" class="btn btn-outline-success">
+                            <i class="fas fa-plus me-1"></i>Criar Primeiro Personagem
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste WebSocket Chat - Unified Chronicles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .chat-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fafafa;
+            border-radius: 5px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .message.user {
+            background: #e3f2fd;
+            text-align: right;
+        }
+        .message.other {
+            background: #f3e5f5;
+        }
+        .message.system {
+            background: #fff3e0;
+            font-style: italic;
+            text-align: center;
+        }
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #messageInput {
+            flex: 1;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .status.connected {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status.disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .commands {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .commands h3 {
+            margin-top: 0;
+        }
+        .command-list {
+            list-style: none;
+            padding: 0;
+        }
+        .command-list li {
+            padding: 5px 0;
+            font-family: monospace;
+            background: white;
+            padding: 5px;
+            margin: 2px 0;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>🎲 Teste WebSocket Chat - Unified Chronicles</h1>
+        
+        <div id="connectionStatus" class="status disconnected">
+            Desconectado
+        </div>
+        
+        <div id="messages" class="messages"></div>
+        
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="Digite sua mensagem ou comando..." maxlength="2000">
+            <button id="sendButton" disabled>Enviar</button>
+        </div>
+        
+        <div class="input-group">
+            <input type="number" id="salaId" placeholder="ID da Sala" value="1" min="1">
+            <button id="connectButton">Conectar</button>
+            <button id="disconnectButton" disabled>Desconectar</button>
+        </div>
+        
+        <div class="commands">
+            <h3>📋 Comandos Disponíveis</h3>
+            <ul class="command-list">
+                <li><strong>/roll 1d20</strong> - Rolar 1 dado de 20 lados</li>
+                <li><strong>/roll 2d6+3</strong> - Rolar 2 dados de 6 lados e somar 3</li>
+                <li><strong>/roll advantage</strong> - Rolar com vantagem (2d20, pegar maior)</li>
+                <li><strong>/roll disadvantage</strong> - Rolar com desvantagem (2d20, pegar menor)</li>
+                <li><strong>/whisper @usuario mensagem</strong> - Enviar mensagem privada</li>
+                <li><strong>/me faz uma ação</strong> - Ação narrativa</li>
+                <li><strong>ping</strong> - Testar conexão</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let chatSocket = null;
+        let salaId = null;
+        
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const connectButton = document.getElementById('connectButton');
+        const disconnectButton = document.getElementById('disconnectButton');
+        const messagesDiv = document.getElementById('messages');
+        const statusDiv = document.getElementById('connectionStatus');
+        const salaIdInput = document.getElementById('salaId');
+        
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                statusDiv.textContent = `Conectado à sala ${salaId}`;
+                statusDiv.className = 'status connected';
+                sendButton.disabled = false;
+                connectButton.disabled = true;
+                disconnectButton.disabled = false;
+                messageInput.disabled = false;
+            } else {
+                statusDiv.textContent = 'Desconectado';
+                statusDiv.className = 'status disconnected';
+                sendButton.disabled = true;
+                connectButton.disabled = false;
+                disconnectButton.disabled = true;
+                messageInput.disabled = true;
+            }
+        }
+        
+        function addMessage(content, type = 'other', timestamp = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = timestamp ? new Date(timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `<small>[${time}]</small><br>${content}`;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function connect() {
+            salaId = salaIdInput.value;
+            if (!salaId) {
+                alert('Por favor, insira o ID da sala');
+                return;
+            }
+            
+            // Usar wss:// para HTTPS, ws:// para HTTP
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/chat/sala/${salaId}/`;
+            
+            addMessage(`Tentando conectar à sala ${salaId}...`, 'system');
+            
+            chatSocket = new WebSocket(wsUrl);
+            
+            chatSocket.onopen = function(e) {
+                addMessage('✅ Conectado com sucesso!', 'system');
+                updateConnectionStatus(true);
+            };
+            
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log('Mensagem recebida:', data);
+                
+                switch(data.type) {
+                    case 'chat_message':
+                        const msg = data.mensagem;
+                        let sender = 'Sistema';
+                        let content = msg.conteudo;
+                        
+                        if (msg.usuario) {
+                            sender = msg.usuario.nome_completo || msg.usuario.username;
+                        }
+                        
+                        if (msg.personagem) {
+                            sender = `${msg.personagem.nome} (${sender})`;
+                        }
+                        
+                        if (msg.tipo === 'WHISPER') {
+                            content = `<em>🤫 Sussurro:</em> ${content}`;
+                        } else if (msg.tipo === 'COMANDO_ACAO') {
+                            content = `<em>🎭 ${sender} ${content.substring(3)}</em>`;
+                            sender = '';
+                        } else if (msg.tipo === 'COMANDO_ROLAGEM') {
+                            content = `🎲 <strong>${content}</strong>`;
+                            if (msg.rolagem) {
+                                content += ` = <strong>${msg.rolagem.resultado}</strong>`;
+                            }
+                        }
+                        
+                        const fullMessage = sender ? `<strong>${sender}:</strong> ${content}` : content;
+                        addMessage(fullMessage, 'other', msg.timestamp);
+                        break;
+                        
+                    case 'user_status':
+                        const action = data.action === 'entrou' ? '✅' : '❌';
+                        addMessage(`${action} ${data.usuario_nome} ${data.action} da sala`, 'system', data.timestamp);
+                        break;
+                        
+                    case 'user_typing':
+                        // Implementar indicador de digitação se necessário
+                        console.log(`${data.usuario_nome} está digitando: ${data.is_typing}`);
+                        break;
+                        
+                    case 'system_notification':
+                        addMessage(`ℹ️ ${data.message}`, 'system', data.timestamp);
+                        break;
+                        
+                    case 'error':
+                        addMessage(`❌ Erro: ${data.message}`, 'error', data.timestamp);
+                        break;
+                        
+                    case 'pong':
+                        addMessage('🏓 Pong recebido', 'system');
+                        break;
+                        
+                    default:
+                        console.log('Tipo de mensagem desconhecido:', data.type);
+                }
+            };
+            
+            chatSocket.onclose = function(e) {
+                updateConnectionStatus(false);
+                if (e.code === 4001) {
+                    addMessage('❌ Erro: Usuário não autenticado', 'error');
+                } else if (e.code === 4003) {
+                    addMessage('❌ Erro: Sem permissão para acessar esta sala', 'error');
+                } else if (e.code === 4004) {
+                    addMessage('❌ Erro: Sala não encontrada', 'error');
+                } else {
+                    addMessage(`❌ Conexão fechada. Código: ${e.code}`, 'system');
+                }
+            };
+            
+            chatSocket.onerror = function(e) {
+                addMessage('❌ Erro na conexão WebSocket', 'error');
+                console.error('WebSocket error:', e);
+            };
+        }
+        
+        function disconnect() {
+            if (chatSocket) {
+                chatSocket.close();
+                chatSocket = null;
+            }
+        }
+        
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || !chatSocket) return;
+            
+            if (message === 'ping') {
+                chatSocket.send(JSON.stringify({
+                    'action': 'ping'
+                }));
+            } else if (message.startsWith('/')) {
+                // Comando
+                chatSocket.send(JSON.stringify({
+                    'action': 'execute_command',
+                    'command': message
+                }));
+            } else {
+                // Mensagem normal
+                chatSocket.send(JSON.stringify({
+                    'action': 'send_message',
+                    'message': message
+                }));
+            }
+            
+            // Mostrar mensagem localmente
+            addMessage(`<strong>Você:</strong> ${message}`, 'user');
+            messageInput.value = '';
+        }
+        
+        // Event listeners
+        connectButton.addEventListener('click', connect);
+        disconnectButton.addEventListener('click', disconnect);
+        sendButton.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Status inicial
+        updateConnectionStatus(false);
+    </script>
+</body>
+</html>

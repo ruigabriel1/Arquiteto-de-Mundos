@@ -1,0 +1,742 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Personagens - Unified Chronicles{% endblock %}
+
+{% block extra_css %}
+<style>
+    .character-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .character-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .character-card:hover {
+        transform: translateY(-8px);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(111, 66, 193, 0.5);
+        box-shadow: 0 20px 40px rgba(111, 66, 193, 0.2);
+    }
+    
+    .character-header {
+        background: linear-gradient(135deg, #6f42c1, #2d1b69);
+        padding: 1.5rem;
+        position: relative;
+        color: white;
+    }
+    
+    .character-level-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .character-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 1rem;
+        color: white;
+    }
+    
+    .character-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    
+    .character-class-race {
+        text-align: center;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+    
+    .character-stats {
+        padding: 1.5rem;
+    }
+    
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.8rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        transition: background 0.3s ease;
+    }
+    
+    .stat-row:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .stat-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+    
+    .stat-value {
+        font-weight: bold;
+        color: #6f42c1;
+        font-size: 1.1rem;
+    }
+    
+    .hp-bar {
+        background: rgba(0, 0, 0, 0.3);
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    
+    .hp-fill {
+        background: linear-gradient(90deg, #28a745, #20c997);
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    .character-actions {
+        padding: 1rem 1.5rem;
+        background: rgba(0, 0, 0, 0.2);
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-character {
+        flex: 1;
+        padding: 0.6rem;
+        font-size: 0.85rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .campaign-indicator {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: rgba(40, 167, 69, 0.8);
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+    
+    .campaign-indicator.inactive {
+        background: rgba(108, 117, 125, 0.8);
+    }
+    
+    .create-character-card {
+        border: 2px dashed rgba(111, 66, 193, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .create-character-card:hover {
+        border-color: #6f42c1;
+        background: rgba(111, 66, 193, 0.05);
+    }
+    
+    .create-content {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .create-icon {
+        font-size: 4rem;
+        color: rgba(111, 66, 193, 0.3);
+        margin-bottom: 1rem;
+    }
+    
+    .filters-bar {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-chip {
+        background: rgba(111, 66, 193, 0.2);
+        border: 1px solid rgba(111, 66, 193, 0.3);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .filter-chip.active {
+        background: linear-gradient(135deg, #6f42c1, #2d1b69);
+        border-color: #6f42c1;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(111, 66, 193, 0.3);
+    }
+    
+    .stats-overview {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .overview-stat {
+        text-align: center;
+    }
+    
+    .overview-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #6f42c1;
+        display: block;
+    }
+    
+    .overview-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+        .character-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filters-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .character-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-2">
+                        <i class="fas fa-users me-3 text-primary"></i>
+                        Meus Personagens
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Gerencie seus heróis e acompanhe sua evolução através das campanhas
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="importarPersonagem()">
+                        <i class="fas fa-upload me-2"></i>Importar
+                    </button>
+                    <button class="btn btn-primary" onclick="criarPersonagem()">
+                        <i class="fas fa-plus me-2"></i>Novo Personagem
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="stats-overview">
+        <div class="row">
+            <div class="col-md-3 overview-stat">
+                <span class="overview-number" id="total-characters">5</span>
+                <div class="overview-label">Total de Personagens</div>
+            </div>
+            <div class="col-md-3 overview-stat">
+                <span class="overview-number text-success" id="active-characters">3</span>
+                <div class="overview-label">Em Campanhas Ativas</div>
+            </div>
+            <div class="col-md-3 overview-stat">
+                <span class="overview-number text-warning" id="avg-level">7.2</span>
+                <div class="overview-label">Nível Médio</div>
+            </div>
+            <div class="col-md-3 overview-stat">
+                <span class="overview-number text-info" id="total-sessions">42</span>
+                <div class="overview-label">Sessões Jogadas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-bar">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-filter text-muted"></i>
+            <span class="text-muted">Filtrar por:</span>
+        </div>
+        <div class="filter-chip active" onclick="filtrarPersonagens('todos')">
+            <i class="fas fa-th-large me-2"></i>Todos
+        </div>
+        <div class="filter-chip" onclick="filtrarPersonagens('ativos')">
+            <i class="fas fa-play me-2"></i>Em Campanha
+        </div>
+        <div class="filter-chip" onclick="filtrarPersonagens('arquivados')">
+            <i class="fas fa-archive me-2"></i>Arquivados
+        </div>
+        <div class="filter-chip" onclick="filtrarPersonagens('favoritos')">
+            <i class="fas fa-star me-2"></i>Favoritos
+        </div>
+        <div class="ms-auto">
+            <div class="input-group">
+                <input type="text" class="form-control form-control-sm" placeholder="Buscar personagem..." 
+                       id="search-input" onkeyup="buscarPersonagens()">
+                <button class="btn btn-outline-primary btn-sm" onclick="buscarPersonagens()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Personagens -->
+    <div class="character-grid" id="characters-grid">
+        <!-- Personagem 1 - Ativo -->
+        <div class="character-card" data-status="ativo" data-name="elara shadowbane">
+            <div class="character-header">
+                <div class="campaign-indicator">Em Campanha</div>
+                <div class="character-level-badge">Nível 8</div>
+                <div class="character-avatar">
+                    <i class="fas fa-mask"></i>
+                </div>
+                <div class="character-name">Elara Shadowbane</div>
+                <div class="character-class-race">Ladina Élfica • Assassina</div>
+            </div>
+            
+            <div class="character-stats">
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-heart me-2 text-danger"></i>Pontos de Vida
+                    </span>
+                    <span class="stat-value">64/72</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-fill" style="width: 89%;"></div>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-shield-alt me-2 text-info"></i>Classe de Armadura
+                    </span>
+                    <span class="stat-value">16</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-coins me-2 text-warning"></i>Ouro
+                    </span>
+                    <span class="stat-value">347 PO</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-flag me-2 text-success"></i>Campanha
+                    </span>
+                    <span class="stat-value">A Lenda de Drakmoor</span>
+                </div>
+            </div>
+            
+            <div class="character-actions">
+                <button class="btn btn-primary btn-character" onclick="verPersonagem(1)">
+                    <i class="fas fa-eye me-1"></i>Ver
+                </button>
+                <button class="btn btn-success btn-character" onclick="jogarCom(1)">
+                    <i class="fas fa-play me-1"></i>Jogar
+                </button>
+                <button class="btn btn-outline-light btn-character" onclick="editarPersonagem(1)">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </button>
+            </div>
+        </div>
+
+        <!-- Personagem 2 - Ativo -->
+        <div class="character-card" data-status="ativo" data-name="thorin ironforge">
+            <div class="character-header">
+                <div class="campaign-indicator">Em Campanha</div>
+                <div class="character-level-badge">Nível 6</div>
+                <div class="character-avatar">
+                    <i class="fas fa-hammer"></i>
+                </div>
+                <div class="character-name">Thorin Ironforge</div>
+                <div class="character-class-race">Guerreiro Anão • Defensor</div>
+            </div>
+            
+            <div class="character-stats">
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-heart me-2 text-danger"></i>Pontos de Vida
+                    </span>
+                    <span class="stat-value">58/58</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-fill" style="width: 100%;"></div>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-shield-alt me-2 text-info"></i>Classe de Armadura
+                    </span>
+                    <span class="stat-value">18</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-coins me-2 text-warning"></i>Ouro
+                    </span>
+                    <span class="stat-value">156 PO</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-flag me-2 text-success"></i>Campanha
+                    </span>
+                    <span class="stat-value">Piratas do Arquipélago</span>
+                </div>
+            </div>
+            
+            <div class="character-actions">
+                <button class="btn btn-primary btn-character" onclick="verPersonagem(2)">
+                    <i class="fas fa-eye me-1"></i>Ver
+                </button>
+                <button class="btn btn-success btn-character" onclick="jogarCom(2)">
+                    <i class="fas fa-play me-1"></i>Jogar
+                </button>
+                <button class="btn btn-outline-light btn-character" onclick="editarPersonagem(2)">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </button>
+            </div>
+        </div>
+
+        <!-- Personagem 3 - Arquivado -->
+        <div class="character-card" data-status="arquivado" data-name="luna starweaver">
+            <div class="character-header">
+                <div class="campaign-indicator inactive">Arquivado</div>
+                <div class="character-level-badge">Nível 12</div>
+                <div class="character-avatar">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <div class="character-name">Luna Starweaver</div>
+                <div class="character-class-race">Mago Humana • Evocadora</div>
+            </div>
+            
+            <div class="character-stats">
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-heart me-2 text-danger"></i>Pontos de Vida
+                    </span>
+                    <span class="stat-value">84/84</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-fill" style="width: 100%;"></div>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-shield-alt me-2 text-info"></i>Classe de Armadura
+                    </span>
+                    <span class="stat-value">13</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-coins me-2 text-warning"></i>Ouro
+                    </span>
+                    <span class="stat-value">1,247 PO</span>
+                </div>
+                
+                <div class="stat-row">
+                    <span class="stat-label">
+                        <i class="fas fa-trophy me-2 text-warning"></i>Status
+                    </span>
+                    <span class="stat-value">Completou Campanha</span>
+                </div>
+            </div>
+            
+            <div class="character-actions">
+                <button class="btn btn-primary btn-character" onclick="verPersonagem(3)">
+                    <i class="fas fa-eye me-1"></i>Ver
+                </button>
+                <button class="btn btn-warning btn-character" onclick="reativarPersonagem(3)">
+                    <i class="fas fa-undo me-1"></i>Reativar
+                </button>
+                <button class="btn btn-outline-light btn-character" onclick="editarPersonagem(3)">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </button>
+            </div>
+        </div>
+
+        <!-- Card para Criar Novo Personagem -->
+        <div class="character-card create-character-card" onclick="criarPersonagem()">
+            <div class="create-content">
+                <div class="create-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h4>Criar Novo Personagem</h4>
+                <p class="text-muted">
+                    Dê vida a um novo herói e comece uma jornada épica
+                </p>
+                <button class="btn btn-primary mt-3">
+                    <i class="fas fa-magic me-2"></i>Começar Criação
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado Vazio -->
+    <div class="text-center py-5" id="empty-state" style="display: none;">
+        <i class="fas fa-search fa-4x text-muted mb-4"></i>
+        <h4 class="text-muted mb-3">Nenhum personagem encontrado</h4>
+        <p class="text-muted mb-4">
+            Não há personagens que correspondam aos filtros aplicados.
+        </p>
+        <button class="btn btn-outline-primary" onclick="filtrarPersonagens('todos')">
+            <i class="fas fa-undo me-2"></i>Mostrar Todos
+        </button>
+    </div>
+</div>
+
+<!-- Modal de Importação -->
+<div class="modal fade" id="modalImportar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">
+                    <i class="fas fa-upload me-2"></i>Importar Personagem
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Fonte</label>
+                    <select class="form-select" id="import-source">
+                        <option value="dndbeyond">D&D Beyond</option>
+                        <option value="roll20">Roll20</option>
+                        <option value="json">Arquivo JSON</option>
+                        <option value="pdf">Ficha PDF</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Arquivo ou URL</label>
+                    <input type="file" class="form-control" id="import-file" accept=".json,.pdf">
+                    <div class="form-text">
+                        Formatos suportados: JSON, PDF
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="executarImportacao()">
+                    <i class="fas fa-upload me-2"></i>Importar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filtros de personagem
+    function filtrarPersonagens(filtro) {
+        // Atualizar filtros ativos
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        const characters = document.querySelectorAll('.character-card:not(.create-character-card)');
+        let visibleCount = 0;
+        
+        characters.forEach(character => {
+            const status = character.getAttribute('data-status');
+            let shouldShow = false;
+            
+            switch(filtro) {
+                case 'todos':
+                    shouldShow = true;
+                    break;
+                case 'ativos':
+                    shouldShow = status === 'ativo';
+                    break;
+                case 'arquivados':
+                    shouldShow = status === 'arquivado';
+                    break;
+                case 'favoritos':
+                    shouldShow = character.classList.contains('favorito');
+                    break;
+            }
+            
+            if (shouldShow) {
+                character.style.display = 'block';
+                visibleCount++;
+            } else {
+                character.style.display = 'none';
+            }
+        });
+        
+        // Mostrar/ocultar estado vazio
+        document.getElementById('empty-state').style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+    
+    // Busca de personagens
+    function buscarPersonagens() {
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+        const characters = document.querySelectorAll('.character-card:not(.create-character-card)');
+        let visibleCount = 0;
+        
+        characters.forEach(character => {
+            const name = character.getAttribute('data-name');
+            if (name && name.includes(searchTerm)) {
+                character.style.display = 'block';
+                visibleCount++;
+            } else if (searchTerm === '') {
+                character.style.display = 'block';
+                visibleCount++;
+            } else {
+                character.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('empty-state').style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+    
+    // Ações de personagem
+    function verPersonagem(id) {
+        window.location.href = `/personagens/${id}/`;
+    }
+    
+    function jogarCom(id) {
+        showNotification('Iniciando sessão com personagem...', 'info');
+        setTimeout(() => {
+            window.location.href = '/arquiteto/';
+        }, 1000);
+    }
+    
+    function editarPersonagem(id) {
+        window.location.href = `/personagens/${id}/editar/`;
+    }
+    
+    function criarPersonagem() {
+        window.location.href = '/personagens/criar/';
+    }
+    
+    function reativarPersonagem(id) {
+        if (confirm('Deseja reativar este personagem?')) {
+            showNotification('Personagem reativado com sucesso!', 'success');
+            
+            // Atualizar visualmente
+            const card = document.querySelector(`[onclick*="${id}"] .campaign-indicator`);
+            if (card) {
+                card.textContent = 'Disponível';
+                card.classList.remove('inactive');
+                card.style.background = 'rgba(40, 167, 69, 0.8)';
+            }
+        }
+    }
+    
+    // Importação
+    function importarPersonagem() {
+        new bootstrap.Modal(document.getElementById('modalImportar')).show();
+    }
+    
+    function executarImportacao() {
+        const source = document.getElementById('import-source').value;
+        const file = document.getElementById('import-file').files[0];
+        
+        if (!file) {
+            showNotification('Selecione um arquivo para importar', 'warning');
+            return;
+        }
+        
+        showNotification('Importando personagem...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Personagem importado com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalImportar')).hide();
+            
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }, 2000);
+    }
+    
+    // Animações de entrada
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.character-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px) scale(0.95)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0) scale(1)';
+            }, index * 150);
+        });
+        
+        // Animação das estatísticas
+        const numbers = document.querySelectorAll('.overview-number');
+        numbers.forEach((number, index) => {
+            const target = parseFloat(number.textContent);
+            let current = 0;
+            const increment = target / 50;
+            
+            setTimeout(() => {
+                const counter = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(counter);
+                    }
+                    
+                    if (target % 1 === 0) {
+                        number.textContent = Math.floor(current);
+                    } else {
+                        number.textContent = current.toFixed(1);
+                    }
+                }, 20);
+            }, index * 200);
+        });
+    });
+    
+    // Busca em tempo real
+    document.getElementById('search-input').addEventListener('input', function() {
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(buscarPersonagens, 300);
+    });
+</script>
+{% endblock %}

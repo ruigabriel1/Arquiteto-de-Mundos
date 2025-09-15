@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+
+{% block title %}Unified Chronicles - Plataforma RPG Definitiva{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        min-height: 100vh;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(111, 66, 193, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(45, 27, 105, 0.3) 0%, transparent 50%),
+            linear-gradient(135deg, #1a1a1a 0%, #2d1b69 100%);
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-content {
+        z-index: 2;
+        position: relative;
+    }
+    
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #fff 0%, #6f42c1 50%, #2d1b69 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 2rem;
+        text-shadow: 0 0 30px rgba(111, 66, 193, 0.3);
+    }
+    
+    .hero-subtitle {
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 3rem;
+        font-weight: 300;
+    }
+    
+    .floating-elements {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    .floating-dice {
+        position: absolute;
+        color: rgba(111, 66, 193, 0.2);
+        font-size: 2rem;
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .dice-1 { top: 20%; left: 10%; animation-delay: 0s; }
+    .dice-2 { top: 50%; right: 15%; animation-delay: 2s; }
+    .dice-3 { bottom: 30%; left: 20%; animation-delay: 4s; }
+    .dice-4 { top: 70%; right: 30%; animation-delay: 1s; }
+    .dice-5 { top: 30%; left: 70%; animation-delay: 3s; }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    
+    .feature-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(111, 66, 193, 0.5);
+        box-shadow: 0 20px 40px rgba(111, 66, 193, 0.2);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #6f42c1, #2d1b69);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .stats-section {
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 3rem;
+        margin: 5rem 0;
+    }
+    
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #6f42c1;
+        display: block;
+    }
+    
+    .cta-section {
+        background: linear-gradient(135deg, rgba(111, 66, 193, 0.2) 0%, rgba(45, 27, 105, 0.2) 100%);
+        border-radius: 20px;
+        padding: 4rem 2rem;
+        text-align: center;
+        margin: 5rem 0;
+    }
+    
+    .btn-hero {
+        font-size: 1.2rem;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #6f42c1, #2d1b69);
+        border: none;
+        color: white;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(111, 66, 193, 0.3);
+    }
+    
+    .btn-hero:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(111, 66, 193, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary-hero {
+        background: transparent;
+        border: 2px solid #6f42c1;
+        color: #6f42c1;
+    }
+    
+    .btn-secondary-hero:hover {
+        background: #6f42c1;
+        color: white;
+    }
+    
+    .testimonial {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1rem 0;
+        border-left: 4px solid #6f42c1;
+    }
+    
+    .quick-start-card {
+        background: rgba(111, 66, 193, 0.1);
+        border: 1px solid rgba(111, 66, 193, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: white;
+        display: block;
+        height: 100%;
+    }
+    
+    .quick-start-card:hover {
+        background: rgba(111, 66, 193, 0.2);
+        color: white;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(111, 66, 193, 0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        .hero-subtitle {
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="floating-elements">
+        <i class="fas fa-dice-d20 floating-dice dice-1"></i>
+        <i class="fas fa-dice-d6 floating-dice dice-2"></i>
+        <i class="fas fa-dice-d12 floating-dice dice-3"></i>
+        <i class="fas fa-dice-d8 floating-dice dice-4"></i>
+        <i class="fas fa-dice-d4 floating-dice dice-5"></i>
+    </div>
+    
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 hero-content">
+                <h1 class="hero-title">Unified Chronicles</h1>
+                <p class="hero-subtitle">
+                    A plataforma definitiva para RPG com Inteligência Artificial. 
+                    Tenha o <strong>Arquiteto de Mundos</strong> como seu Mestre IA pessoal - sem limite de criatividade!
+                </p>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    {% if user.is_authenticated %}
+                        <a href="/arquiteto/" class="btn-hero">
+                            <i class="fas fa-robot me-2"></i>Arquiteto de Mundos
+                        </a>
+                        <a href="/personagens/" class="btn-hero btn-secondary-hero">
+                            <i class="fas fa-user-circle me-2"></i>Meus Personagens
+                        </a>
+                    {% else %}
+                        <a href="/admin/" class="btn-hero">
+                            <i class="fas fa-play me-2"></i>Começar Agora
+                        </a>
+                        <a href="#features" class="btn-hero btn-secondary-hero">
+                            <i class="fas fa-info-circle me-2"></i>Saiba Mais
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="text-center">
+                    <div class="feature-card" style="max-width: 500px; margin: 0 auto;">
+                        <div class="feature-icon">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h3>IA de Nova Geração</h3>
+                        <p class="text-muted">
+                            Nosso Arquiteto de Mundos usa inteligência artificial avançada para criar 
+                            narrativas únicas, NPCs memoráveis e experiências verdadeiramente épicas.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-4 mb-4">Recursos Revolucionários</h2>
+            <p class="lead text-muted">Tudo que você precisa para criar as melhores campanhas de RPG</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h4>Arquiteto IA como Mestre</h4>
+                    <p class="text-muted">
+                        <strong>O verdadeiro Mestre é a IA!</strong> Ela entende contexto, cria NPCs únicos 
+                        e adapta a narrativa ao estilo da sua mesa. Jogadores são apenas organizadores.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4>Gestão Completa</h4>
+                    <p class="text-muted">
+                        Gerencie personagens, campanhas e sessões em uma interface 
+                        intuitiva e profissional.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-dice-d20"></i>
+                    </div>
+                    <h4>Sistema Universal</h4>
+                    <p class="text-muted">
+                        Compatível com D&D 5e, Pathfinder e outros sistemas. 
+                        Rolagens automáticas e cálculos precisos.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4>Memória Persistente</h4>
+                    <p class="text-muted">
+                        A IA lembra de tudo: decisões, consequências e 
+                        desenvolvimento dos personagens.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Análise Profunda</h4>
+                    <p class="text-muted">
+                        Análise psicológica de personagens e sugestões 
+                        narrativas personalizadas.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h4>Sempre Acessível</h4>
+                    <p class="text-muted">
+                        Interface responsiva que funciona perfeitamente em 
+                        desktop, tablet e celular.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="stats-section">
+            <div class="row text-center">
+                <div class="col-md-3 mb-4">
+                    <span class="stat-number" data-target="1247">0</span>
+                    <p class="text-muted">Campanhas Ativas</p>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <span class="stat-number" data-target="8392">0</span>
+                    <p class="text-muted">Personagens Criados</p>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <span class="stat-number" data-target="15748">0</span>
+                    <p class="text-muted">Sessões Jogadas</p>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <span class="stat-number" data-target="99.7">0</span>
+                    <p class="text-muted">% Satisfação</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Start Section -->
+{% if not user.is_authenticated %}
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 mb-4">Como Começar</h2>
+            <p class="lead text-muted">Três passos simples para sua primeira aventura épica</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <a href="/admin/" class="quick-start-card">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h5>1. Crie sua Conta</h5>
+                        <p class="text-muted small">
+                            Cadastre-se gratuitamente e tenha acesso a todas as funcionalidades.
+                        </p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-md-4">
+                <a href="#" class="quick-start-card">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-flag"></i>
+                        </div>
+                        <h5>2. Configure sua Campanha</h5>
+                        <p class="text-muted small">
+                            Crie sua primeira campanha e configure o estilo narrativo da IA.
+                        </p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-md-4">
+                <a href="#" class="quick-start-card">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-play"></i>
+                        </div>
+                        <h5>3. Comece a Jogar</h5>
+                        <p class="text-muted small">
+                            Inicie uma sessão com o Arquiteto de Mundos e viva aventuras únicas!
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Testimonials Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 mb-4">O que dizem nossos Jogadores</h2>
+            <p class="lead text-muted">Experiências reais com o <strong>Arquiteto de Mundos</strong> como Mestre IA</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="testimonial">
+                    <p class="mb-3">
+                        <i class="fas fa-quote-left me-2"></i>
+                        "O Arquiteto de Mundos revolucionou minhas campanhas. Nunca mais fico sem ideias!"
+                    </p>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                        <div>
+                            <strong>Marcus RPG</strong>
+                            <div class="text-muted small">Jogador e Organizador há 10 anos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="testimonial">
+                    <p class="mb-3">
+                        <i class="fas fa-quote-left me-2"></i>
+                        "A análise de personagens me ajudou a criar arcos narrativos incríveis."
+                    </p>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                        <div>
+                            <strong>Ana Storyteller</strong>
+                            <div class="text-muted small">Organizadora Profissional</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="testimonial">
+                    <p class="mb-3">
+                        <i class="fas fa-quote-left me-2"></i>
+                        "Interface intuitiva e a IA realmente entende o que eu preciso. Perfeito!"
+                    </p>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-user text-dark"></i>
+                        </div>
+                        <div>
+                            <strong>Carlos DM</strong>
+                            <div class="text-muted small">Streamer de RPG</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="cta-section">
+            <h2 class="display-5 mb-4">Pronto para Começar sua Jornada?</h2>
+            <p class="lead mb-4">
+                Junte-se a milhares de mestres que já descobriram o poder do RPG com IA
+            </p>
+            
+            {% if user.is_authenticated %}
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="/arquiteto/" class="btn-hero">
+                        <i class="fas fa-rocket me-2"></i>Acessar Arquiteto de Mundos
+                    </a>
+                    <a href="/personagens/" class="btn-hero btn-secondary-hero">
+                        <i class="fas fa-user-circle me-2"></i>Meus Personagens
+                    </a>
+                </div>
+            {% else %}
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="/admin/" class="btn-hero">
+                        <i class="fas fa-magic me-2"></i>Criar Conta Gratuita
+                    </a>
+                    <a href="/admin/" class="btn-hero btn-secondary-hero">
+                        <i class="fas fa-sign-in-alt me-2"></i>Fazer Login
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animação dos números das estatísticas
+    function animateNumbers() {
+        const counters = document.querySelectorAll('.stat-number');
+        
+        counters.forEach(counter => {
+            const target = +counter.getAttribute('data-target');
+            const increment = target / 200; // Velocidade da animação
+            
+            function updateCount() {
+                const current = +counter.textContent;
+                if (current < target) {
+                    counter.textContent = Math.ceil(current + increment);
+                    setTimeout(updateCount, 10);
+                } else {
+                    if (target === 99.7) {
+                        counter.textContent = target.toFixed(1);
+                    } else {
+                        counter.textContent = target.toLocaleString();
+                    }
+                }
+            }
+            
+            updateCount();
+        });
+    }
+    
+    // Intersection Observer para ativar animação quando a seção aparecer
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateNumbers();
+                observer.unobserve(entry.target);
+            }
+        });
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const statsSection = document.querySelector('.stats-section');
+        if (statsSection) {
+            observer.observe(statsSection);
+        }
+        
+        // Smooth scroll para links internos
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

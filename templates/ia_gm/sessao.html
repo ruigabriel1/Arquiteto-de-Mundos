@@ -1,0 +1,1009 @@
+{% extends "base.html" %}
+
+{% block title %}{{ sessao.nome|default:"Sessão IA GM" }} - Unified Chronicles{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 75vh;
+        overflow-y: auto;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        background: rgba(0,0,0,0.3);
+        padding: 15px;
+    }
+    
+    .chat-message {
+        margin-bottom: 15px;
+        padding: 12px 15px;
+        border-radius: 15px;
+        max-width: 85%;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .chat-message.user {
+        background: rgba(45, 27, 105, 0.8);
+        margin-left: auto;
+        margin-right: 0;
+        text-align: right;
+        border-bottom-right-radius: 5px;
+    }
+    
+    .chat-message.ia {
+        background: rgba(111, 66, 193, 0.8);
+        margin-right: auto;
+        margin-left: 0;
+        border-bottom-left-radius: 5px;
+    }
+    
+    .chat-message.system {
+        background: rgba(255, 193, 7, 0.2);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        text-align: center;
+        margin: 10px auto;
+        max-width: 60%;
+        font-size: 0.9em;
+        font-style: italic;
+    }
+    
+    .message-header {
+        font-size: 0.8em;
+        opacity: 0.7;
+        margin-bottom: 5px;
+    }
+    
+    .message-content {
+        line-height: 1.4;
+    }
+    
+    .typing-indicator {
+        display: none;
+        padding: 10px 15px;
+        background: rgba(111, 66, 193, 0.8);
+        border-radius: 15px;
+        margin-right: auto;
+        margin-left: 0;
+        max-width: 80px;
+        animation: pulse 1.5s infinite;
+    }
+    
+    .typing-dots {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+    
+    .typing-dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        opacity: 0.4;
+        animation: typingDot 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0s; }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 0.6;
+        }
+        50% {
+            opacity: 1;
+        }
+    }
+    
+    @keyframes typingDot {
+        0%, 80%, 100% {
+            opacity: 0.4;
+            transform: scale(0.8);
+        }
+        40% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    .input-area {
+        background: rgba(255,255,255,0.05);
+        border-radius: 10px;
+        padding: 15px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .quick-actions {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+    
+    .quick-actions .btn {
+        font-size: 0.8em;
+        padding: 4px 8px;
+    }
+    
+    .dice-result {
+        background: rgba(255, 193, 7, 0.2);
+        border: 1px solid rgba(255, 193, 7, 0.5);
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        margin: 10px 0;
+        font-weight: bold;
+    }
+    
+    .status-panels {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header da Sessão -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-dice-d20 me-2 text-primary"></i>
+                        {{ sessao.nome|default:"Sessão de Jogo" }}
+                    </h2>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="text-muted">{{ sessao.campanha.nome }}</span>
+                        <span class="badge bg-success">
+                            <i class="fas fa-circle me-1"></i>Ativa
+                        </span>
+                        <span class="text-muted" id="duracao-sessao">
+                            <i class="fas fa-clock me-1"></i>
+                            <span id="timer">00:00:00</span>
+                        </span>
+                        <span id="turno-atual" class="text-info" style="display: none;">
+                            <i class="fas fa-sync me-1"></i>Turno 1
+                        </span>
+                        <span id="aguardando-jogadores" class="text-warning" style="display: none;">
+                            <i class="fas fa-hourglass-half me-1"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button id="iniciar-modo-jogo" class="btn btn-success" style="display: block;">
+                        <i class="fas fa-play me-1"></i>
+                        <span class="btn-text">Iniciar Modo de Jogo</span>
+                        <span class="loading-text" style="display: none;">
+                            <i class="fas fa-spinner fa-spin me-1"></i>Iniciando...
+                        </span>
+                    </button>
+                    <button id="pausar-sessao" class="btn btn-outline-warning" style="display: none;">
+                        <i class="fas fa-pause me-1"></i>Pausar
+                    </button>
+                    <button id="retomar-sessao" class="btn btn-outline-success" style="display: none;">
+                        <i class="fas fa-play me-1"></i>Retomar
+                    </button>
+                    <button id="encerrar-sessao" class="btn btn-outline-danger">
+                        <i class="fas fa-stop me-1"></i>Encerrar
+                    </button>
+                    <a href="{% url 'campanhas:detalhes' sessao.campanha.id %}" class="btn btn-outline-info">
+                        <i class="fas fa-users me-1"></i>Campanha
+                    </a>
+                    <a href="{% url 'ia_gm:painel' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" data-sessao-id="{{ sessao.id }}">
+        <!-- Chat Principal -->
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <h5 class="mb-0 me-3">
+                            <i class="fas fa-comments me-2"></i>Chat com IA GM
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success rounded-circle me-2" style="width: 8px; height: 8px;"></div>
+                            <small class="text-success">IA GM Online</small>
+                        </div>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-light" onclick="limparChat()">
+                            <i class="fas fa-broom"></i>
+                        </button>
+                        <button class="btn btn-outline-light" onclick="salvarChat()">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class="btn btn-outline-light" onclick="exportarChat()">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="chat-container" id="chat-container">
+                        <!-- Mensagem inicial apenas quando modo de jogo não estiver ativo -->
+                        <div class="chat-message system" id="welcome-message">
+                            <div class="message-content">
+                                🤖 <strong>Modo de Jogo do Arquiteto de Mundos</strong><br>
+                                Clique em "<strong>Iniciar Modo de Jogo</strong>" para ativar a IA e começar uma aventura contextual única!
+                            </div>
+                        </div>
+                        
+                        <!-- Indicador de digitação -->
+                        <div class="typing-indicator" id="typing-indicator">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="input-area">
+                        <!-- Ações Rápidas -->
+                        <div class="quick-actions">
+                            <button class="btn btn-sm btn-outline-primary" onclick="adicionarComandoRapido('/ambiente')">
+                                🌍 Ambiente
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="adicionarComandoRapido('/npc')">
+                                🎭 NPC
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="adicionarComandoRapido('/combate')">
+                                ⚔️ Combate
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="adicionarComandoRapido('/roll 1d20')">
+                                🎲 D20
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="adicionarComandoRapido('/sugestao')">
+                                💡 Sugestão
+                            </button>
+                        </div>
+                        
+                        <!-- Input de Mensagem -->
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="message-input" 
+                                   placeholder="Digite sua mensagem ou comando para a IA GM..." 
+                                   onkeypress="checkEnter(event)">
+                            <button id="send-message" class="btn btn-primary" onclick="enviarMensagem()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                💡 Dica: Use comandos com "/" para ações especiais
+                            </small>
+                            <div class="d-flex align-items-center gap-2">
+                                <small class="text-muted">Tokens usados:</small>
+                                <span class="badge bg-info" id="token-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel Lateral -->
+        <div class="col-lg-4">
+            <div class="status-panels">
+                <!-- Status da Sessão -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Status da Sessão
+                        </h6>
+                    </div>
+                    <div class="card-body py-3">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-primary">
+                                    <i class="fas fa-comments fa-2x mb-1"></i>
+                                    <div><small>Mensagens</small></div>
+                                    <div><strong id="total-messages">1</strong></div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-success">
+                                    <i class="fas fa-dice-d20 fa-2x mb-1"></i>
+                                    <div><small>Rolagens</small></div>
+                                    <div><strong id="total-rolls">0</strong></div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-warning">
+                                    <i class="fas fa-users fa-2x mb-1"></i>
+                                    <div><small>NPCs</small></div>
+                                    <div><strong id="total-npcs">0</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seletor de Personagem (Para Jogadores) -->
+                {% if not sessao.campanha.organizador == request.user and personagens %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-user-circle me-2"></i>Meu Personagem
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="personagem-ativo" class="form-label small">Jogando como:</label>
+                            <select class="form-select form-select-sm" id="personagem-ativo" onchange="selecionarPersonagem()">
+                                <option value="">Selecione seu personagem...</option>
+                                {% for personagem in personagens %}
+                                    {% if personagem.usuario == request.user %}
+                                    <option value="{{ personagem.id }}" data-nome="{{ personagem.nome }}" data-nivel="{{ personagem.nivel }}" 
+                                            data-classe="{{ personagem.classes.0.nome|default:'' }}">
+                                        {{ personagem.nome }} (Nível {{ personagem.nivel }}{% if personagem.classes %} - {{ personagem.classes.0.nome }}{% endif %})
+                                    </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Info do Personagem Selecionado -->
+                        <div id="personagem-info" class="d-none">
+                            <div class="d-flex align-items-center p-2 bg-success bg-opacity-10 rounded border border-success border-opacity-25">
+                                <div class="me-3">
+                                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 32px; height: 32px;">
+                                        <i class="fas fa-user fa-sm text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="fw-bold" id="personagem-nome"></div>
+                                    <small class="text-success" id="personagem-detalhes"></small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <small class="text-muted mt-2 d-block">
+                            💡 Selecione qual personagem você está interpretando nesta sessão.
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Personagens da Sessão (Para o Mestre) -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-users me-2"></i>
+                            {% if sessao.campanha.organizador == request.user %}
+                                Personagens da Campanha
+                            {% else %}
+                                Outros Personagens
+                            {% endif %}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% if personagens %}
+                            {% for personagem in personagens %}
+                                {% if not personagem.usuario == request.user or sessao.campanha.organizador == request.user %}
+                                <div class="d-flex align-items-center mb-2 p-2 bg-dark rounded">
+                                    <div class="me-3">
+                                        {% if personagem.avatar %}
+                                            <img src="{{ personagem.avatar.url }}" 
+                                                 class="rounded-circle" 
+                                                 style="width: 32px; height: 32px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 32px; height: 32px;">
+                                                <i class="fas fa-user fa-sm text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold">{{ personagem.nome }}</div>
+                                        <small class="text-muted">
+                                            Nível {{ personagem.nivel }}
+                                            {% if personagem.classes %}
+                                                - {{ personagem.classes.0.nome }}
+                                            {% endif %}
+                                            {% if sessao.campanha.organizador == request.user %}
+                                                <br><span class="text-info">{{ personagem.usuario.nome_completo }}</span>
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-2">
+                                <i class="fas fa-user-plus fa-2x mb-2"></i>
+                                <p class="mb-0">Nenhum personagem na campanha</p>
+                                {% if sessao.campanha.organizador == request.user %}
+                                    <a href="{% url 'campanhas:detalhes' sessao.campanha.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                                        Gerenciar Campanha
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'personagens_web:criar' %}" class="btn btn-sm btn-outline-primary mt-2">
+                                        Criar Personagem
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Dados Rápidos -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-dice me-2"></i>Dados Rápidos
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <button class="btn btn-sm btn-outline-light w-100" onclick="rolarDado(4)">
+                                    D4
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-sm btn-outline-light w-100" onclick="rolarDado(6)">
+                                    D6
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-sm btn-outline-light w-100" onclick="rolarDado(8)">
+                                    D8
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-sm btn-outline-light w-100" onclick="rolarDado(10)">
+                                    D10
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-sm btn-outline-light w-100" onclick="rolarDado(12)">
+                                    D12
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-sm btn-primary w-100" onclick="rolarDado(20)">
+                                    D20
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="custom-dice" 
+                                       placeholder="Ex: 3d6+2">
+                                <button class="btn btn-outline-primary" onclick="rolarDadoCustomizado()">
+                                    Rolar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="dice-results" class="mt-2">
+                            <!-- Resultados dos dados aparecerão aqui -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NPCs Ativos -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-theater-masks me-2"></i>NPCs Ativos
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="npcs-list">
+                            <div class="text-center text-muted py-2">
+                                <i class="fas fa-theater-masks fa-2x mb-2"></i>
+                                <p class="mb-0">Nenhum NPC ativo</p>
+                                <small>Use /npc para criar</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Encerramento -->
+<div class="modal fade" id="modalEncerrar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Encerrar Sessão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja encerrar esta sessão?</p>
+                <div class="mb-3">
+                    <label class="form-label">Notas de Encerramento (Opcional)</label>
+                    <textarea class="form-control" id="notas-encerramento" rows="3"
+                              placeholder="Resumo da sessão, pontos importantes, próximos passos..."></textarea>
+                </div>
+                <p class="text-warning"><small>Esta ação salvará automaticamente todo o histórico da sessão.</small></p>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarEncerramento()">
+                    <i class="fas fa-stop me-2"></i>Encerrar Sessão
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<!-- JavaScript do Modo de Jogo -->
+<script src="{% static 'js/game-session.js' %}"></script>
+
+<!-- JavaScript da Interface -->
+<script>
+    let sessaoIniciada = Date.now();
+    let totalMessages = 1;
+    let totalRolls = 0;
+    let totalNPCs = 0;
+    let tokenCount = 0;
+
+    // Timer da sessão
+    function updateTimer() {
+        const agora = Date.now();
+        const duracao = Math.floor((agora - sessaoIniciada) / 1000);
+        
+        const horas = Math.floor(duracao / 3600).toString().padStart(2, '0');
+        const minutos = Math.floor((duracao % 3600) / 60).toString().padStart(2, '0');
+        const segundos = (duracao % 60).toString().padStart(2, '0');
+        
+        document.getElementById('timer').textContent = `${horas}:${minutos}:${segundos}`;
+    }
+
+    // Inicializar timer
+    setInterval(updateTimer, 1000);
+
+    // Função para enviar mensagem - integração com GameSessionManager
+    function enviarMensagem() {
+        // Se GameSessionManager está ativo, deixa ele processar
+        if (window.gameSession && window.gameSession.estado === 'ativa') {
+            // GameSessionManager já tem seu próprio processamento
+            return;
+        }
+        
+        // Fallback para quando modo de jogo não está ativo
+        const input = document.getElementById('message-input');
+        const mensagem = input.value.trim();
+        
+        if (!mensagem) return;
+        
+        // Adicionar mensagem do usuário
+        adicionarMensagem('user', 'Mestre', mensagem);
+        input.value = '';
+        
+        // Mostrar indicador de digitação
+        mostrarIndicadorDigitacao();
+        
+        // Processar comando ou enviar para IA
+        if (mensagem.startsWith('/')) {
+            processarComando(mensagem);
+        } else {
+            enviarParaIA(mensagem);
+        }
+        
+        // Atualizar estatísticas
+        totalMessages++;
+        document.getElementById('total-messages').textContent = totalMessages;
+    }
+
+    // Função para adicionar mensagem ao chat
+    function adicionarMensagem(tipo, remetente, conteudo) {
+        const container = document.getElementById('chat-container');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${tipo}`;
+        
+        const agora = new Date();
+        const horario = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.innerHTML = `
+            <div class="message-header">
+                <strong>${remetente === 'user' ? '<i class="fas fa-user me-1"></i>Mestre' : '<i class="fas fa-robot me-1"></i>IA GM'}</strong>
+                <span class="text-muted">${horario}</span>
+            </div>
+            <div class="message-content">${conteudo}</div>
+        `;
+        
+        container.insertBefore(messageDiv, document.getElementById('typing-indicator'));
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // Função para mostrar indicador de digitação
+    function mostrarIndicadorDigitacao() {
+        document.getElementById('typing-indicator').style.display = 'block';
+        document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+    }
+
+    // Função para esconder indicador de digitação
+    function esconderIndicadorDigitacao() {
+        document.getElementById('typing-indicator').style.display = 'none';
+    }
+
+    // Função para processar comandos
+    function processarComando(comando) {
+        const partes = comando.split(' ');
+        const cmd = partes[0].toLowerCase();
+        const args = partes.slice(1).join(' ');
+        
+        setTimeout(() => {
+            esconderIndicadorDigitacao();
+            
+            switch(cmd) {
+                case '/ambiente':
+                    gerarAmbiente(args);
+                    break;
+                case '/npc':
+                    gerarNPC(args);
+                    break;
+                case '/combate':
+                    iniciarCombate();
+                    break;
+                case '/roll':
+                    rolarDadosComando(args || '1d20');
+                    break;
+                case '/sugestao':
+                    darSugestao();
+                    break;
+                default:
+                    adicionarMensagem('system', 'Sistema', 
+                        `Comando "${cmd}" não reconhecido. Comandos disponíveis: /ambiente, /npc, /combate, /roll, /sugestao`);
+            }
+        }, 1000 + Math.random() * 2000);
+    }
+
+    // Função para enviar para IA - integrada com GameSessionManager
+    function enviarParaIA(mensagem) {
+        // Delega para o GameSessionManager ao invés de duplicar lógica
+        if (window.gameSession && window.gameSession.estado === 'ativa') {
+            console.log('Delegando para GameSessionManager:', mensagem);
+            // O GameSessionManager já processará a mensagem
+            return;
+        }
+        
+        // Fallback simples para demonstração se GameSessionManager não estiver ativo
+        setTimeout(() => {
+            esconderIndicadorDigitacao();
+            adicionarMensagem('system', 'Aviso', '⚠️ Para funcionalidade completa da IA, use o botão "Iniciar Modo de Jogo"');
+        }, 1000);
+    }
+
+    // Funções de comando específicas
+    function gerarAmbiente(local) {
+        const ambientes = [
+            `🏰 **${local || 'Local Misterioso'}**\n\nO ar aqui é carregado de magia antiga. Runas brilham fracamente nas paredes de pedra, emanando uma luz azulada que dança nas sombras. Seus passos ecoam no silêncio quase religioso deste lugar.`,
+            `🌲 **${local || 'Floresta Sombria'}**\n\nAs árvores se erguem como gigantes silenciosos, seus galhos entrelaçados filtrando a luz do sol em raios dourados. O cheiro de terra úmida e folhas em decomposição preenche o ar, enquanto um vento suave sussurra segredos antigos.`,
+            `⛰️ **${local || 'Caverna Profunda'}**\n\nA escuridão é quase palpável aqui. Gotículas de água ecoam em algum lugar distante, criando uma sinfonia hipnotizante. As paredes rochosas suam umidade, e cristais ocasionais captam qualquer luz disponível, criando reflexos fascinantes.`
+        ];
+        
+        adicionarMensagem('ia', 'IA GM', ambientes[Math.floor(Math.random() * ambientes.length)]);
+    }
+
+    function gerarNPC(descricao) {
+        totalNPCs++;
+        document.getElementById('total-npcs').textContent = totalNPCs;
+        
+        const nomes = ['Aldric', 'Elara', 'Thorin', 'Lyanna', 'Gareth', 'Mira', 'Dain', 'Seraphina'];
+        const nome = nomes[Math.floor(Math.random() * nomes.length)];
+        
+        const npc = `🎭 **${nome}** acaba de entrar em cena!
+        
+*${descricao || 'Uma figura interessante aparece'}*
+
+**Personalidade:** ${Math.random() > 0.5 ? 'Amigável mas cauteloso' : 'Misterioso e reservado'}
+**Motivação:** ${Math.random() > 0.5 ? 'Busca informações sobre algo importante' : 'Tem um segredo que não quer revelar'}
+**Gancho de RPG:** ${Math.random() > 0.5 ? 'Oferece uma missão secundária interessante' : 'Possui conexões com a trama principal'}
+
+Como os personagens reagem à presença de ${nome}?`;
+        
+        adicionarMensagem('ia', 'IA GM', npc);
+        
+        // Adicionar à lista de NPCs
+        const npcsList = document.getElementById('npcs-list');
+        if (npcsList.innerHTML.includes('Nenhum NPC ativo')) {
+            npcsList.innerHTML = '';
+        }
+        
+        const npcDiv = document.createElement('div');
+        npcDiv.className = 'mb-2 p-2 bg-dark rounded';
+        npcDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <strong>${nome}</strong>
+                <button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <small class="text-muted">${descricao || 'NPC gerado automaticamente'}</small>
+        `;
+        npcsList.appendChild(npcDiv);
+    }
+
+    function iniciarCombate() {
+        adicionarMensagem('ia', 'IA GM', `⚔️ **COMBATE INICIADO!**
+        
+🎲 Vamos organizar a iniciativa! Peça para cada jogador rolar 1d20 + modificador de Destreza.
+
+**Sistema de Combate Ativo:**
+• Use /roll para rolagens rápidas
+• Descreva as ações e eu sugiro consequências
+• Posso calcular dano e efeitos automaticamente
+
+**Dicas para um combate épico:**
+• Descreva o ambiente - use-o taticamente
+• Permita soluções criativas dos jogadores
+• Mantenha o ritmo ágil e cinematográfico
+
+Qual é a situação de combate? Quantos inimigos?`);
+    }
+
+    function darSugestao() {
+        const sugestoes = [
+            '💡 **Sugestão Narrativa:** Que tal introduzir um dilema moral? Force os personagens a escolherem entre dois caminhos, ambos com consequências significativas.',
+            '💡 **Sugestão de Ambiente:** Adicione um elemento sensorial marcante - um cheiro estranho, um som distante, uma textura inusitada que desperte curiosidade.',
+            '💡 **Sugestão de NPC:** Crie um NPC que espelhe um dos personagens, mas com escolhas de vida opostas. Isso pode gerar ótimas oportunidades de roleplay.',
+            '💡 **Sugestão de Mistério:** Plante uma pista falsa que pareça óbvia, mas leve a uma descoberta inesperada e mais interessante.',
+            '💡 **Sugestão de Tensão:** Introduza um timer - algo precisa ser feito antes que seja tarde demais. Isso acelera o ritmo e aumenta a tensão.'
+        ];
+        
+        adicionarMensagem('ia', 'IA GM', sugestoes[Math.floor(Math.random() * sugestoes.length)]);
+    }
+
+    // Funções de dados
+    function rolarDado(lados) {
+        const resultado = Math.floor(Math.random() * lados) + 1;
+        adicionarResultadoDado(`D${lados}`, resultado);
+        totalRolls++;
+        document.getElementById('total-rolls').textContent = totalRolls;
+    }
+
+    function rolarDadosComando(expressao) {
+        // Parser simples de dados (ex: 3d6+2)
+        const match = expressao.match(/(\d+)?d(\d+)([\+\-]\d+)?/);
+        if (!match) {
+            adicionarMensagem('system', 'Sistema', `Formato inválido. Use: XdY+Z (ex: 3d6+2)`);
+            return;
+        }
+        
+        const quantidade = parseInt(match[1] || 1);
+        const lados = parseInt(match[2]);
+        const modificador = parseInt(match[3] || 0);
+        
+        const resultados = [];
+        let total = 0;
+        
+        for (let i = 0; i < quantidade; i++) {
+            const resultado = Math.floor(Math.random() * lados) + 1;
+            resultados.push(resultado);
+            total += resultado;
+        }
+        
+        total += modificador;
+        
+        let texto = `🎲 **${expressao.toUpperCase()}**\n`;
+        texto += `Dados: [${resultados.join(', ')}]`;
+        if (modificador !== 0) {
+            texto += ` ${modificador >= 0 ? '+' : ''}${modificador}`;
+        }
+        texto += `\n**Total: ${total}**`;
+        
+        adicionarMensagem('system', 'Sistema', texto);
+        totalRolls++;
+        document.getElementById('total-rolls').textContent = totalRolls;
+    }
+
+    function rolarDadoCustomizado() {
+        const input = document.getElementById('custom-dice');
+        const expressao = input.value.trim();
+        if (expressao) {
+            rolarDadosComando(expressao);
+            input.value = '';
+        }
+    }
+
+    function adicionarResultadoDado(tipo, resultado) {
+        const resultsDiv = document.getElementById('dice-results');
+        const resultDiv = document.createElement('div');
+        resultDiv.className = 'dice-result';
+        resultDiv.innerHTML = `<strong>${tipo}: ${resultado}</strong>`;
+        
+        resultsDiv.insertBefore(resultDiv, resultsDiv.firstChild);
+        
+        // Remover resultados antigos
+        while (resultsDiv.children.length > 3) {
+            resultsDiv.removeChild(resultsDiv.lastChild);
+        }
+        
+        setTimeout(() => {
+            resultDiv.remove();
+        }, 10000);
+    }
+
+    // Funções auxiliares
+    function adicionarComandoRapido(comando) {
+        const input = document.getElementById('message-input');
+        input.value = comando + ' ';
+        input.focus();
+    }
+
+    function checkEnter(event) {
+        if (event.key === 'Enter') {
+            enviarMensagem();
+        }
+    }
+
+    function pausarSessao() {
+        showNotification('Sessão pausada', 'warning');
+    }
+
+    function encerrarSessao() {
+        new bootstrap.Modal(document.getElementById('modalEncerrar')).show();
+    }
+
+    function confirmarEncerramento() {
+        const notas = document.getElementById('notas-encerramento').value;
+        // Aqui faria a requisição para encerrar a sessão
+        showNotification('Sessão encerrada e salva com sucesso!', 'success');
+        setTimeout(() => {
+            window.location.href = "{% url 'ia_gm:painel' %}";
+        }, 2000);
+    }
+
+    function limparChat() {
+        if (confirm('Tem certeza que deseja limpar o chat? Esta ação não pode ser desfeita.')) {
+            const container = document.getElementById('chat-container');
+            const messages = container.querySelectorAll('.chat-message:not(.system)');
+            messages.forEach(msg => msg.remove());
+            totalMessages = 0;
+            document.getElementById('total-messages').textContent = totalMessages;
+            showNotification('Chat limpo!', 'info');
+        }
+    }
+
+    function salvarChat() {
+        showNotification('Chat salvo automaticamente!', 'success');
+    }
+
+    function exportarChat() {
+        showNotification('Exportando chat... (Funcionalidade em desenvolvimento)', 'info');
+    }
+
+    // Funções de suporte para integração com APIs
+    function getSessaoId() {
+        const element = document.querySelector('[data-sessao-id]');
+        return element ? element.dataset.sessaoId : null;
+    }
+    
+    function getCSRFToken() {
+        const cookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='));
+        return cookie ? cookie.split('=')[1] : '';
+    }
+    
+    function processarTurnoCompleto(resultado) {
+        // Mostra ações processadas
+        if (resultado.acoes_processadas) {
+            adicionarMensagem('system', 'Turno Processado', 
+                `✅ Turno ${resultado.numero_turno}:\n${resultado.acoes_processadas.join('\n')}`
+            );
+        }
+        
+        // Mostra narrativa resultado
+        if (resultado.narrativa_resultado) {
+            adicionarMensagem('ia', 'IA GM', resultado.narrativa_resultado);
+        }
+        
+        // Se há nova situação, exibe
+        if (resultado.nova_situacao) {
+            setTimeout(() => {
+                adicionarMensagem('ia', 'IA GM', resultado.nova_situacao.situacao);
+                if (resultado.nova_situacao.chamada_jogadores) {
+                    adicionarMensagem('system', 'Chamada', resultado.nova_situacao.chamada_jogadores);
+                }
+            }, 1000);
+        }
+        
+        // Atualiza interface
+        if (resultado.proximo_turno) {
+            document.getElementById('turno-atual').textContent = `Turno ${resultado.proximo_turno}`;
+            document.getElementById('turno-atual').style.display = 'inline';
+        }
+    }
+    
+    // Função removida - agora usando GameSessionManager.ativarModoJogo()
+    // A lógica foi movida para o GameSessionManager para evitar duplicação
+    
+    // Event listeners removidos - GameSessionManager já gerencia os botões
+    // Ver attachEventListeners() no GameSessionManager
+    
+    // Auto-scroll para novas mensagens
+    const chatContainer = document.getElementById('chat-container');
+    const observer = new MutationObserver(() => {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+    observer.observe(chatContainer, { childList: true });
+
+    // Função para seletor de personagem
+    function selecionarPersonagem() {
+        const select = document.getElementById('personagem-ativo');
+        const infoDiv = document.getElementById('personagem-info');
+        const nomeSpan = document.getElementById('personagem-nome');
+        const detalhesSpan = document.getElementById('personagem-detalhes');
+        
+        if (select.value) {
+            const option = select.options[select.selectedIndex];
+            const nome = option.dataset.nome;
+            const nivel = option.dataset.nivel;
+            const classe = option.dataset.classe;
+            
+            nomeSpan.textContent = nome;
+            detalhesSpan.textContent = `Nível ${nivel}${classe ? ' - ' + classe : ''}`;
+            
+            infoDiv.classList.remove('d-none');
+            
+            // Salvar seleção no localStorage para persistência
+            localStorage.setItem(`personagem-sessao-${getSessaoId()}`, select.value);
+            
+            // Notificar o GameSessionManager se existir
+            if (window.gameSession) {
+                window.gameSession.personagemAtivo = {
+                    id: select.value,
+                    nome: nome,
+                    nivel: nivel,
+                    classe: classe
+                };
+            }
+            
+            showNotification(`Personagem selecionado: ${nome}`, 'success');
+        } else {
+            infoDiv.classList.add('d-none');
+            localStorage.removeItem(`personagem-sessao-${getSessaoId()}`);
+            
+            if (window.gameSession) {
+                window.gameSession.personagemAtivo = null;
+            }
+        }
+    }
+    
+    // Restaurar seleção de personagem ao carregar
+    document.addEventListener('DOMContentLoaded', function() {
+        const select = document.getElementById('personagem-ativo');
+        if (select) {
+            const personagemSalvo = localStorage.getItem(`personagem-sessao-${getSessaoId()}`);
+            if (personagemSalvo) {
+                select.value = personagemSalvo;
+                selecionarPersonagem();
+            }
+        }
+    });
+
+    // Focar no input ao carregar
+    document.getElementById('message-input').focus();
+</script>
+{% endblock %}

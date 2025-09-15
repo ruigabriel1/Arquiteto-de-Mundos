@@ -1,0 +1,502 @@
+{% extends 'ia_gm/base_ia.html' %}
+{% load static %}
+
+{% block title %}{{ sessao.nome_sessao }} - Arquiteto de Mundos{% endblock %}
+
+{% block ia_content %}
+<div class="row">
+    <!-- Painel Principal -->
+    <div class="col-lg-8">
+        <!-- Controles de Sessão -->
+        <div class="card ia-card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h4 class="mb-1">{{ sessao.nome_sessao }}</h4>
+                        <p class="text-muted mb-0">{{ sessao.campanha.nome }} • {{ sessao.get_estilo_narrativo_display }}</p>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-ia" data-bs-toggle="modal" data-bs-target="#configModal">
+                                <i class="fas fa-cogs me-1"></i>
+                                Configurar
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#eventoModal">
+                                <i class="fas fa-bookmark me-1"></i>
+                                Evento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Barra de Configurações Rápidas -->
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <small class="text-muted">Criatividade</small>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ sessao.nivel_criatividade }}0%"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">Dificuldade</small>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ sessao.nivel_dificuldade }}0%"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted">Status</small>
+                        <div>
+                            <span class="badge {% if sessao.status == 'ATIVA' %}bg-success{% elif sessao.status == 'PAUSADA' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ sessao.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ferramentas de Geração Rápida -->
+        <div class="card ia-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-magic me-2"></i>
+                    Ferramentas do Arquiteto
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-outline-primary w-100" onclick="gerarNPC()">
+                            <i class="fas fa-user-plus d-block mb-2" style="font-size: 1.5rem;"></i>
+                            <small>Gerar NPC</small>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-outline-success w-100" onclick="gerarLocal()">
+                            <i class="fas fa-map d-block mb-2" style="font-size: 1.5rem;"></i>
+                            <small>Criar Local</small>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-outline-warning w-100" onclick="gerarMissao()">
+                            <i class="fas fa-scroll d-block mb-2" style="font-size: 1.5rem;"></i>
+                            <small>Nova Missão</small>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-outline-info w-100" onclick="processarAcao()">
+                            <i class="fas fa-dice-d20 d-block mb-2" style="font-size: 1.5rem;"></i>
+                            <small>Processar Ação</small>
+                        </button>
+                    </div>
+                </div>
+                
+                <hr class="my-3">
+                
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="processarAcaoImpossivel()">
+                            <i class="fas fa-magic me-1"></i>
+                            Ação "Impossível" ("Sim, e...")
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Mais Ferramentas
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="gerarItem()">
+                                    <i class="fas fa-gem me-2"></i>Gerar Item Mágico
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="gerarConsequencia()">
+                                    <i class="fas fa-arrows-turn-right me-2"></i>Gerar Consequência
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'ia_gm:biblioteca' sessao.id %}">
+                                    <i class="fas fa-book me-2"></i>Biblioteca de Conteúdo
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'ia_gm:analise_personagem' sessao.id %}">
+                                    <i class="fas fa-user-chart me-2"></i>Análise de Personagens
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container para Conteúdo Gerado -->
+        <div id="conteudo-gerado-container">
+            <!-- Conteúdo será inserido aqui dinamicamente -->
+        </div>
+
+        <!-- NPCs Ativos -->
+        {% if npcs %}
+        <div class="card ia-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    NPCs Ativos ({{ npcs.count }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for npc in npcs|slice:":6" %}
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">{{ npc.nome }}</h6>
+                                <small class="text-muted">{{ npc.localizacao_atual|default:"Local desconhecido" }}</small>
+                                <div class="mt-1">
+                                    <span class="badge bg-{{ npc.disposicao_atual|lower == 'amigavel'|yesno:'success,warning' }}">
+                                        {{ npc.get_disposicao_atual_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        onclick="gerarDialogoNPC('{{ npc.id }}', '{{ npc.nome }}')">
+                                    <i class="fas fa-comment"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if npcs.count > 6 %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'ia_gm:biblioteca' sessao.id %}?tipo=npc" class="btn btn-sm btn-outline-primary">
+                        Ver todos os {{ npcs.count }} NPCs
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Missões Ativas -->
+        {% if missoes %}
+        <div class="card ia-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-scroll me-2"></i>
+                    Missões Ativas ({{ missoes.count }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for missao in missoes|slice:":3" %}
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <h6 class="mb-0 flex-grow-1">{{ missao.titulo }}</h6>
+                        <span class="badge bg-info">{{ missao.get_status_display }}</span>
+                    </div>
+                    <p class="text-muted mb-2 small">{{ missao.objetivo_principal|truncatechars:120 }}</p>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <small class="text-muted">
+                            Dificuldade: 
+                            {% for i in "12345678910"|make_list %}
+                                {% if forloop.counter <= missao.dificuldade_estimada %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </small>
+                        <button type="button" class="btn btn-sm btn-outline-success" 
+                                onclick="desenvolverMissao('{{ missao.id }}')">
+                            <i class="fas fa-forward me-1"></i>
+                            Desenvolver
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar Direita -->
+    <div class="col-lg-4">
+        <!-- Oportunidades Narrativas -->
+        {% if oportunidades %}
+        <div class="card ia-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Oportunidades Narrativas
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for oportunidade in oportunidades|slice:":5" %}
+                <div class="oportunidade-narrativa oportunidade-{{ oportunidade.prioridade }}">
+                    <div class="d-flex align-items-start">
+                        <div class="me-2">
+                            {% if oportunidade.prioridade == 'alta' %}
+                                <i class="fas fa-exclamation-triangle text-danger"></i>
+                            {% elif oportunidade.prioridade == 'media' %}
+                                <i class="fas fa-exclamation-circle text-warning"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle text-success"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>{{ oportunidade.descricao }}</strong>
+                            <div class="small text-muted mt-1">{{ oportunidade.sugestao }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Memórias Recentes -->
+        {% if memorias_recentes %}
+        <div class="card ia-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    Memórias Recentes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for memoria in memorias_recentes|slice:":5" %}
+                <div class="memoria-importante">
+                    <div class="d-flex align-items-center mb-2">
+                        <small class="text-muted">{{ memoria.data_criacao|timesince }} atrás</small>
+                        <div class="ms-auto">
+                            {% for i in "12345678910"|make_list %}
+                                {% if forloop.counter <= memoria.importancia %}
+                                    <i class="fas fa-star text-warning" style="font-size: 0.7rem;"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="small">{{ memoria.conteudo_memoria|truncatechars:150 }}</div>
+                    {% if memoria.personagens_envolvidos %}
+                    <div class="mt-2">
+                        {% for personagem in memoria.personagens_envolvidos %}
+                            <span class="badge bg-light text-dark me-1">{{ personagem }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'ia_gm:historico' sessao.id %}" class="btn btn-sm btn-outline-primary">
+                        Ver Histórico Completo
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Contexto da Campanha -->
+        <div class="card ia-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-book-open me-2"></i>
+                    Contexto da Campanha
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">Temas Recorrentes</h6>
+                    {% for tema in contexto_narrativo.temas_recorrentes|slice:":5" %}
+                        <span class="badge bg-secondary me-1 mb-1">{{ tema }}</span>
+                    {% empty %}
+                        <small class="text-muted">Ainda coletando dados...</small>
+                    {% endfor %}
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">Threads Abertas</h6>
+                    {% for thread in contexto_narrativo.threads_abertas|slice:":3" %}
+                        <div class="small mb-1">• {{ thread|truncatechars:80 }}</div>
+                    {% empty %}
+                        <small class="text-muted">Nenhuma thread pendente.</small>
+                    {% endfor %}
+                </div>
+                
+                <div>
+                    <h6 class="text-muted mb-2">Estatísticas</h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="estatisticas-numero">{{ contexto_narrativo.npcs_importantes|length }}</div>
+                            <small class="text-muted">NPCs</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="estatisticas-numero">{{ contexto_narrativo.locais_conhecidos|length }}</div>
+                            <small class="text-muted">Locais</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="estatisticas-numero">{{ contexto_narrativo.missoes_ativas|length }}</div>
+                            <small class="text-muted">Missões</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Links Rápidos -->
+        <div class="card ia-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-external-link-alt me-2"></i>
+                    Links Rápidos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'ia_gm:biblioteca' sessao.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-book me-2"></i>
+                        Biblioteca de Conteúdo
+                    </a>
+                    <a href="{% url 'ia_gm:analise_personagem' sessao.id %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-user-chart me-2"></i>
+                        Análise de Personagens
+                    </a>
+                    <a href="{% url 'ia_gm:historico' sessao.id %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-history me-2"></i>
+                        Histórico de Interações
+                    </a>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="encerrarSessao()">
+                        <i class="fas fa-stop me-2"></i>
+                        Encerrar Sessão
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Funções específicas da sessão
+async function gerarDialogoNPC(npcId, npcNome) {
+    const situacao = prompt(`Qual é a situação do diálogo com ${npcNome}?`);
+    if (!situacao) return;
+    
+    try {
+        // Busca dados do NPC primeiro
+        const npcData = { /* dados do NPC seriam buscados via API */ };
+        
+        const resultado = await gerarConteudo('dialogo_npc', {
+            npc_id: npcId,
+            situacao_dialogo: situacao,
+            acao_jogadores: 'Iniciaram conversa'
+        });
+        
+        if (resultado) {
+            mostrarConteudoGerado(`Diálogo com ${npcNome}`, resultado.conteudo);
+        }
+    } catch (error) {
+        console.error('Erro ao gerar diálogo:', error);
+    }
+}
+
+async function desenvolverMissao(missaoId) {
+    const desenvolvimento = prompt('Como você quer desenvolver esta missão?');
+    if (!desenvolvimento) return;
+    
+    const resultado = await gerarConteudo('consequencia', {
+        acao_original: `Desenvolvimento da missão: ${desenvolvimento}`,
+        quando: 'Agora',
+        contexto_atual: 'Desenvolvimento de missão ativa'
+    });
+    
+    if (resultado) {
+        mostrarConteudoGerado('Desenvolvimento da Missão', resultado.conteudo);
+    }
+}
+
+async function gerarItem() {
+    const tipo = prompt('Que tipo de item você precisa? (arma, armadura, poção, artefato, etc.)');
+    if (!tipo) return;
+    
+    const resultado = await gerarConteudo('item', {
+        tipo_item: tipo,
+        situacao: 'Como recompensa ou descoberta'
+    });
+    
+    if (resultado) {
+        mostrarConteudoGerado('Item Gerado', resultado.conteudo);
+    }
+}
+
+async function gerarConsequencia() {
+    const acao = prompt('Que ação passada você quer desenvolver consequências?');
+    if (!acao) return;
+    
+    const resultado = await gerarConteudo('consequencia', {
+        acao_original: acao,
+        quando: 'Sessões anteriores',
+        contexto_atual: 'Desenvolvimento de consequências'
+    });
+    
+    if (resultado) {
+        mostrarConteudoGerado('Consequência', resultado.conteudo);
+    }
+}
+
+async function encerrarSessao() {
+    const confirma = confirm('Tem certeza que deseja encerrar esta sessão?');
+    if (!confirma) return;
+    
+    const resumo = prompt('Escreva um resumo final da sessão (opcional):') || '';
+    
+    try {
+        const response = await fetch('{% url "ia_gm:api_encerrar_sessao" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                sessao_id: SESSAO_ID,
+                resumo_final: resumo
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.sucesso) {
+            showAlert('Sessão encerrada com sucesso!', 'success');
+            setTimeout(() => {
+                window.location.href = '{% url "ia_gm:painel" %}';
+            }, 2000);
+        } else {
+            showAlert(`Erro ao encerrar sessão: ${data.erro}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Erro na API:', error);
+        showAlert(`Erro de comunicação: ${error.message}`, 'danger');
+    }
+}
+
+// Atualização periódica de oportunidades (opcional)
+setInterval(async function() {
+    try {
+        const response = await fetch(`{% url "ia_gm:api_sugestoes" sessao.id %}?situacao=Sessão em andamento`);
+        const data = await response.json();
+        
+        if (data.sucesso && data.sugestoes.length > 0) {
+            // Atualiza sugestões se houver novas
+            console.log('Novas sugestões disponíveis:', data.sugestoes);
+        }
+    } catch (error) {
+        // Silenciosamente ignora erros de atualização automática
+    }
+}, 300000); // A cada 5 minutos
+</script>
+{% endblock %}

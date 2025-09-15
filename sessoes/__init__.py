@@ -1,0 +1,1 @@
+# Aplicação para gerenciar sessões de jogo e participações

@@ -1,0 +1,170 @@
+{% extends "usuarios/base_usuarios.html" %}
+
+{% block title %}Login - Unified Chronicles{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>
+                <i class="fas fa-sign-in-alt text-primary me-2"></i>
+                Bem-vindo de volta
+            </h1>
+            <p>Acesse sua conta do Unified Chronicles</p>
+        </div>
+        
+        <!-- Exibir mensagens -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Nome de Usuário -->
+            <div class="form-floating mb-3">
+                <input type="text" 
+                       class="form-control" 
+                       id="username" 
+                       name="username" 
+                       placeholder="Nome de usuário"
+                       value="{{ username|default:'' }}"
+                       required
+                       autofocus>
+                <label for="username">
+                    <i class="fas fa-user me-2"></i>Nome de usuário
+                </label>
+            </div>
+            
+            <!-- Senha -->
+            <div class="form-floating mb-3">
+                <input type="password" 
+                       class="form-control" 
+                       id="password" 
+                       name="password" 
+                       placeholder="Senha"
+                       required>
+                <label for="password">
+                    <i class="fas fa-lock me-2"></i>Senha
+                </label>
+            </div>
+            
+            <!-- Lembrar de mim -->
+            <div class="form-check mb-4">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       value="on" 
+                       id="remember_me" 
+                       name="remember_me">
+                <label class="form-check-label" for="remember_me">
+                    Lembrar de mim por 2 semanas
+                </label>
+            </div>
+            
+            <!-- Botão de Login -->
+            <button type="submit" class="btn btn-auth">
+                <i class="fas fa-sign-in-alt me-2"></i>
+                Entrar
+            </button>
+        </form>
+        
+        <!-- Links de navegação -->
+        <div class="auth-links">
+            <p class="mb-2">
+                <a href="#" class="text-warning">
+                    <i class="fas fa-key me-1"></i>
+                    Esqueci minha senha
+                </a>
+            </p>
+            <p class="mb-0">
+                Não tem uma conta?
+                <a href="{% url 'usuarios:cadastro' %}">Criar conta grátis</a>
+            </p>
+            <p class="mt-2 mb-0">
+                <a href="{% url 'usuarios:index' %}">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Voltar ao início
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Login Rápido Demo -->
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="alert alert-warning bg-dark bg-opacity-50 border-warning">
+                <h6 class="alert-heading">
+                    <i class="fas fa-rocket me-2"></i>
+                    Login Rápido para Demonstração
+                </h6>
+                <p class="mb-2">
+                    <small>
+                        Para testar o sistema rapidamente, você pode usar as contas demo:
+                    </small>
+                </p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="loginDemo('admin', 'admin123')">
+                        <i class="fas fa-crown me-1"></i>
+                        Login como Administrador
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="loginDemo('mestre_demo', 'demo123')">
+                        <i class="fas fa-dice-d20 me-1"></i>
+                        Login como Mestre
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="loginDemo('jogador1', 'demo123')">
+                        <i class="fas fa-user me-1"></i>
+                        Login como Jogador
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+function loginDemo(username, password) {
+    document.getElementById('username').value = username;
+    document.getElementById('password').value = password;
+    
+    // Destacar os campos preenchidos
+    document.getElementById('username').classList.add('has-value');
+    document.getElementById('password').classList.add('has-value');
+    
+    // Mostrar feedback visual
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Preenchido!';
+    btn.disabled = true;
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }, 1500);
+}
+
+// Auto-submit se chegou aqui com next parameter
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auto') === 'demo' && urlParams.get('user')) {
+        const user = urlParams.get('user');
+        if (user === 'admin') {
+            loginDemo('admin', 'admin123');
+        } else if (user === 'mestre') {
+            loginDemo('mestre_demo', 'demo123');
+        } else if (user === 'jogador') {
+            loginDemo('jogador1', 'demo123');
+        }
+    }
+});
+</script>
+{% endblock %}

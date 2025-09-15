@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Personagens - Unified Chronicles{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Cabeçalho -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-users me-3"></i>Meus Personagens
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Gerencie suas fichas de personagem
+                    </p>
+                </div>
+                <a href="{% url 'personagens_web:criar' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Criar Personagem
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary bg-opacity-10 border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-friends fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-1">{{ estatisticas.total }}</h4>
+                    <small class="text-muted">Total de Personagens</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success bg-opacity-10 border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-heart fa-2x text-success mb-2"></i>
+                    <h4 class="mb-1">{{ estatisticas.ativos }}</h4>
+                    <small class="text-muted">Personagens Ativos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-secondary bg-opacity-10 border-secondary">
+                <div class="card-body text-center">
+                    <i class="fas fa-archive fa-2x text-secondary mb-2"></i>
+                    <h4 class="mb-1">{{ estatisticas.inativos }}</h4>
+                    <small class="text-muted">Personagens Inativos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" id="filtrosForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="busca" class="form-label">
+                                    <i class="fas fa-search me-1"></i>Buscar Personagem
+                                </label>
+                                <input type="text" class="form-control" id="busca" name="q" 
+                                       value="{{ request.GET.q }}" placeholder="Digite o nome do personagem...">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="ordenar" class="form-label">
+                                    <i class="fas fa-sort me-1"></i>Ordenar por
+                                </label>
+                                <select class="form-select" id="ordenar" name="ordenar">
+                                    <option value="-created_at" {% if request.GET.ordenar == "-created_at" %}selected{% endif %}>
+                                        Mais Recentes
+                                    </option>
+                                    <option value="nome" {% if request.GET.ordenar == "nome" %}selected{% endif %}>
+                                        Nome (A-Z)
+                                    </option>
+                                    <option value="-nome" {% if request.GET.ordenar == "-nome" %}selected{% endif %}>
+                                        Nome (Z-A)
+                                    </option>
+                                    <option value="-nivel" {% if request.GET.ordenar == "-nivel" %}selected{% endif %}>
+                                        Nível (Alto-Baixo)
+                                    </option>
+                                    <option value="nivel" {% if request.GET.ordenar == "nivel" %}selected{% endif %}>
+                                        Nível (Baixo-Alto)
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <div class="d-grid w-100">
+                                    <button type="submit" class="btn btn-outline-light">
+                                        <i class="fas fa-filter me-2"></i>Filtrar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Personagens -->
+    <div class="row">
+        {% if personagens %}
+            {% for personagem in personagens %}
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card h-100 personagem-card" data-personagem-id="{{ personagem.id }}">
+                        <div class="card-body">
+                            <!-- Avatar e Info Básica -->
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="me-3">
+                                    {% if personagem.avatar %}
+                                        <img src="{{ personagem.avatar.url }}" 
+                                             alt="{{ personagem.nome }}" 
+                                             class="rounded-circle" 
+                                             style="width: 60px; height: 60px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                                             style="width: 60px; height: 60px;">
+                                            <i class="fas fa-user fa-lg text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-1">{{ personagem.nome }}</h5>
+                                    <div class="text-muted small">
+                                        {% if personagem.raca and personagem.classe %}
+                                            {{ personagem.raca }} {{ personagem.classe }}
+                                        {% elif personagem.raca %}
+                                            {{ personagem.raca }}
+                                        {% elif personagem.classe %}
+                                            {{ personagem.classe }}
+                                        {% else %}
+                                            Personagem
+                                        {% endif %}
+                                        
+                                        {% if personagem.nivel %}
+                                            <span class="badge bg-primary ms-2">Nível {{ personagem.nivel }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Status -->
+                                <div class="ms-2">
+                                    {% if personagem.ativo %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inativo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Campanha -->
+                            {% if personagem.campanha %}
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-flag me-1"></i>Campanha:
+                                    </small>
+                                    <span class="text-light">{{ personagem.campanha.nome }}</span>
+                                </div>
+                            {% endif %}
+
+                            <!-- Atributos (resumo) -->
+                            {% if personagem.forca or personagem.destreza or personagem.constituicao %}
+                                <div class="mb-3">
+                                    <div class="row text-center">
+                                        {% if personagem.forca %}
+                                            <div class="col-4">
+                                                <small class="text-muted d-block">FOR</small>
+                                                <strong>{{ personagem.forca }}</strong>
+                                            </div>
+                                        {% endif %}
+                                        {% if personagem.destreza %}
+                                            <div class="col-4">
+                                                <small class="text-muted d-block">DES</small>
+                                                <strong>{{ personagem.destreza }}</strong>
+                                            </div>
+                                        {% endif %}
+                                        {% if personagem.constituicao %}
+                                            <div class="col-4">
+                                                <small class="text-muted d-block">CON</small>
+                                                <strong>{{ personagem.constituicao }}</strong>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <!-- Data de criação -->
+                            <div class="text-muted small mb-3">
+                                <i class="fas fa-calendar me-1"></i>
+                                Criado em {{ personagem.created_at|date:"d/m/Y" }}
+                            </div>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'personagens_web:detalhes' personagem.id %}" 
+                                   class="btn btn-outline-primary btn-sm flex-fill">
+                                    <i class="fas fa-eye me-1"></i>Ver
+                                </a>
+                                <a href="{% url 'personagens_web:editar' personagem.id %}" 
+                                   class="btn btn-outline-light btn-sm flex-fill">
+                                    <i class="fas fa-edit me-1"></i>Editar
+                                </a>
+                                <button type="button" 
+                                        class="btn btn-outline-danger btn-sm"
+                                        onclick="confirmarExclusao({{ personagem.id }}, '{{ personagem.nome }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <!-- Estado vazio -->
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-user-friends fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted mb-3">Nenhum personagem encontrado</h4>
+                    <p class="text-muted mb-4">
+                        {% if request.GET.q %}
+                            Não encontramos personagens com o termo "{{ request.GET.q }}".
+                            <br>Tente uma busca diferente.
+                        {% else %}
+                            Você ainda não criou nenhum personagem.
+                            <br>Que tal começar criando seu primeiro herói?
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'personagens_web:criar' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Criar Primeiro Personagem
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalExclusao" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o personagem <strong id="nomePersonagemExclusao"></strong>?</p>
+                <p class="text-warning"><small>Esta ação não pode ser desfeita.</small></p>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" id="formExclusao" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Excluir Definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Função para confirmar exclusão
+    function confirmarExclusao(personagemId, nomePersonagem) {
+        document.getElementById('nomePersonagemExclusao').textContent = nomePersonagem;
+        document.getElementById('formExclusao').action = `/personagens/${personagemId}/excluir/`;
+        new bootstrap.Modal(document.getElementById('modalExclusao')).show();
+    }
+    
+    // Auto-submit do form de filtros quando mudar ordenação
+    document.getElementById('ordenar').addEventListener('change', function() {
+        document.getElementById('filtrosForm').submit();
+    });
+    
+    // Busca com debounce
+    let timeoutBusca;
+    document.getElementById('busca').addEventListener('input', function() {
+        clearTimeout(timeoutBusca);
+        timeoutBusca = setTimeout(() => {
+            document.getElementById('filtrosForm').submit();
+        }, 500);
+    });
+    
+    // Hover effects nos cards
+    document.querySelectorAll('.personagem-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.2s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+{% endblock %}

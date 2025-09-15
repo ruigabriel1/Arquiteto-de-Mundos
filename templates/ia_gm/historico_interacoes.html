@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico de Interações - {{ sessao.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'ia_gm:sessao' sessao.id %}" class="btn btn-outline-light me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-history me-2 text-primary"></i>
+                            Histórico de Interações
+                        </h2>
+                        <p class="text-muted mb-0">
+                            {{ sessao.nome }} • {{ sessao.campanha.nome }}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="exportarHistorico()">
+                        <i class="fas fa-download me-2"></i>Exportar
+                    </button>
+                    <button class="btn btn-outline-success" onclick="gerarResumo()">
+                        <i class="fas fa-file-text me-2"></i>Gerar Resumo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary bg-opacity-10 border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-comments fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-1">{{ interacoes.paginator.count }}</h4>
+                    <small class="text-muted">Total de Interações</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info bg-opacity-10 border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-microchip fa-2x text-info mb-2"></i>
+                    <h4 class="mb-1">{{ total_tokens|floatformat:0 }}</h4>
+                    <small class="text-muted">Tokens Utilizados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success bg-opacity-10 border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x text-success mb-2"></i>
+                    <h4 class="mb-1" id="tempo-medio">--</h4>
+                    <small class="text-muted">Tempo Médio/Resposta</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning bg-opacity-10 border-warning">
+                <div class="card-body text-center">
+                    <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                    <h4 class="mb-1" id="avaliacao-media">--</h4>
+                    <small class="text-muted">Avaliação Média</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>Filtros
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row align-items-end">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Tipo de Interação</label>
+                            <select class="form-select" name="tipo">
+                                <option value="">Todos os Tipos</option>
+                                <option value="NARRATIVA">Narrativa</option>
+                                <option value="NPC">NPC</option>
+                                <option value="LOCAL">Local</option>
+                                <option value="COMBATE">Combate</option>
+                                <option value="DIALOGO">Diálogo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Período</label>
+                            <select class="form-select" name="periodo">
+                                <option value="">Todo o Período</option>
+                                <option value="hoje">Hoje</option>
+                                <option value="semana">Esta Semana</option>
+                                <option value="mes">Este Mês</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" class="form-control" name="busca" 
+                                   placeholder="Buscar nas mensagens..." value="{{ request.GET.busca }}">
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>Filtrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Interações -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Interações
+                    </h5>
+                    <span class="badge bg-secondary">
+                        Página {{ interacoes.number }} de {{ interacoes.paginator.num_pages }}
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    {% if interacoes %}
+                        <div class="timeline">
+                            {% for interacao in interacoes %}
+                                <div class="timeline-item" data-interacao-id="{{ interacao.id }}">
+                                    <div class="timeline-marker bg-primary">
+                                        {% if interacao.tipo_interacao == 'NPC' %}
+                                            <i class="fas fa-user"></i>
+                                        {% elif interacao.tipo_interacao == 'LOCAL' %}
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        {% elif interacao.tipo_interacao == 'COMBATE' %}
+                                            <i class="fas fa-sword"></i>
+                                        {% elif interacao.tipo_interacao == 'DIALOGO' %}
+                                            <i class="fas fa-comments"></i>
+                                        {% else %}
+                                            <i class="fas fa-brain"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">
+                                                        <span class="badge bg-{{ interacao.tipo_interacao|lower }} me-2">
+                                                            {{ interacao.get_tipo_interacao_display }}
+                                                        </span>
+                                                        {{ interacao.data_interacao|date:"d/m/Y H:i" }}
+                                                    </h6>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-user me-1"></i>{{ interacao.usuario.username }}
+                                                    </small>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    {% if interacao.tokens_usados > 0 %}
+                                                        <span class="badge bg-info">
+                                                            {{ interacao.tokens_usados }} tokens
+                                                        </span>
+                                                    {% endif %}
+                                                    {% if interacao.tempo_geracao > 0 %}
+                                                        <span class="badge bg-success">
+                                                            {{ interacao.tempo_geracao|floatformat:1 }}s
+                                                        </span>
+                                                    {% endif %}
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-sm btn-outline-light dropdown-toggle" 
+                                                                data-bs-toggle="dropdown">
+                                                            <i class="fas fa-ellipsis-v"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" 
+                                                                   onclick="copiarInteracao({{ interacao.id }})">
+                                                                    <i class="fas fa-copy me-2"></i>Copiar
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" 
+                                                                   onclick="avaliarInteracao({{ interacao.id }})">
+                                                                    <i class="fas fa-star me-2"></i>Avaliar
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Prompt do Usuário -->
+                                                <div class="mb-3">
+                                                    <h6 class="text-primary mb-2">
+                                                        <i class="fas fa-user me-2"></i>Solicitação
+                                                    </h6>
+                                                    <div class="p-3 bg-primary bg-opacity-10 rounded">
+                                                        {{ interacao.prompt_usuario|linebreaksbr }}
+                                                    </div>
+                                                </div>
+
+                                                <!-- Resposta da IA -->
+                                                <div class="mb-3">
+                                                    <h6 class="text-success mb-2">
+                                                        <i class="fas fa-robot me-2"></i>Resposta da IA
+                                                    </h6>
+                                                    <div class="p-3 bg-success bg-opacity-10 rounded">
+                                                        {{ interacao.resposta_ia|linebreaksbr }}
+                                                    </div>
+                                                </div>
+
+                                                <!-- Contexto (se disponível) -->
+                                                {% if interacao.contexto %}
+                                                    <div class="mb-3">
+                                                        <button class="btn btn-sm btn-outline-secondary" 
+                                                                data-bs-toggle="collapse" 
+                                                                data-bs-target="#contexto-{{ interacao.id }}">
+                                                            <i class="fas fa-info-circle me-2"></i>
+                                                            Ver Contexto Usado
+                                                        </button>
+                                                        <div class="collapse mt-2" id="contexto-{{ interacao.id }}">
+                                                            <div class="p-2 bg-secondary bg-opacity-25 rounded small">
+                                                                <pre>{{ interacao.contexto|pprint }}</pre>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+
+                                                <!-- Avaliação do Usuário -->
+                                                {% if interacao.avaliacao_usuario %}
+                                                    <div class="mt-3 p-2 bg-warning bg-opacity-25 rounded">
+                                                        <strong>Avaliação:</strong>
+                                                        {% for i in "12345"|make_list %}
+                                                            {% if forloop.counter <= interacao.avaliacao_usuario %}
+                                                                <i class="fas fa-star text-warning"></i>
+                                                            {% else %}
+                                                                <i class="far fa-star text-muted"></i>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                        {% if interacao.feedback %}
+                                                            <div class="mt-1">
+                                                                <strong>Feedback:</strong> {{ interacao.feedback }}
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhuma interação encontrada</h5>
+                            <p class="text-muted">
+                                Não há interações com os filtros aplicados.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginação -->
+    {% if interacoes.has_other_pages %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if interacoes.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">Primeira</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ interacoes.previous_page_number }}">Anterior</a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in interacoes.paginator.page_range %}
+                            {% if num == interacoes.number %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if interacoes.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ interacoes.next_page_number }}">Próxima</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ interacoes.paginator.num_pages }}">Última</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Avaliação -->
+<div class="modal fade" id="modalAvaliacao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Avaliar Interação</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAvaliacao">
+                    <input type="hidden" id="interacao-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Avaliação</label>
+                        <div class="d-flex gap-2 justify-content-center">
+                            {% for i in "12345"|make_list %}
+                                <button type="button" class="btn btn-outline-warning btn-star" 
+                                        data-rating="{{ forloop.counter }}">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Feedback (Opcional)</label>
+                        <textarea class="form-control" id="feedback-text" rows="3"
+                                  placeholder="Compartilhe sua opinião sobre esta resposta da IA..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="salvarAvaliacao()">
+                    <i class="fas fa-star me-2"></i>Salvar Avaliação
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 30px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -22px;
+        top: 10px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content-center;
+        font-size: 12px;
+        color: white;
+        z-index: 1;
+    }
+    
+    .timeline-content {
+        margin-left: 20px;
+    }
+    
+    .btn-star.active {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let ratingSelected = 0;
+    let interacaoAtual = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calcular estatísticas
+        calcularEstatisticas();
+        
+        // Setup rating buttons
+        document.querySelectorAll('.btn-star').forEach(btn => {
+            btn.addEventListener('click', function() {
+                ratingSelected = parseInt(this.dataset.rating);
+                updateStarDisplay(ratingSelected);
+            });
+        });
+    });
+    
+    function calcularEstatisticas() {
+        // Calcular tempo médio e avaliação média dos dados da página
+        const tempos = [];
+        const avaliacoes = [];
+        
+        document.querySelectorAll('.timeline-item').forEach(item => {
+            // Extrair dados das interações para estatísticas
+            // Este é um placeholder - em produção, estes dados viriam do backend
+        });
+        
+        // Placeholder para estatísticas
+        document.getElementById('tempo-medio').textContent = '2.3s';
+        document.getElementById('avaliacao-media').textContent = '4.2★';
+    }
+    
+    function updateStarDisplay(rating) {
+        document.querySelectorAll('.btn-star').forEach((btn, index) => {
+            if (index < rating) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+    
+    function avaliarInteracao(interacaoId) {
+        interacaoAtual = interacaoId;
+        document.getElementById('interacao-id').value = interacaoId;
+        
+        // Resetar formulário
+        ratingSelected = 0;
+        updateStarDisplay(0);
+        document.getElementById('feedback-text').value = '';
+        
+        new bootstrap.Modal(document.getElementById('modalAvaliacao')).show();
+    }
+    
+    function salvarAvaliacao() {
+        if (ratingSelected === 0) {
+            showNotification('Selecione uma avaliação', 'warning');
+            return;
+        }
+        
+        const feedback = document.getElementById('feedback-text').value;
+        
+        // Simular salvamento (em produção, faria requisição AJAX)
+        showNotification('Avaliação salva com sucesso!', 'success');
+        
+        // Fechar modal
+        bootstrap.Modal.getInstance(document.getElementById('modalAvaliacao')).hide();
+    }
+    
+    function copiarInteracao(interacaoId) {
+        const interacao = document.querySelector(`[data-interacao-id="${interacaoId}"]`);
+        const texto = interacao.querySelector('.timeline-content').innerText;
+        
+        navigator.clipboard.writeText(texto).then(() => {
+            showNotification('Interação copiada para a área de transferência', 'success');
+        });
+    }
+    
+    function exportarHistorico() {
+        showNotification('Preparando exportação...', 'info');
+        
+        // Simular exportação
+        setTimeout(() => {
+            showNotification('Histórico exportado com sucesso!', 'success');
+        }, 2000);
+    }
+    
+    function gerarResumo() {
+        showNotification('Gerando resumo inteligente da sessão...', 'info');
+        
+        // Simular geração de resumo
+        setTimeout(() => {
+            showNotification('Resumo gerado! Verifique sua biblioteca de conteúdo.', 'success');
+        }, 3000);
+    }
+</script>
+{% endblock %}

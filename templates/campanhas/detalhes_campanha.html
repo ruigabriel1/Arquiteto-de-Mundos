@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ campanha.nome }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .campaign-banner {
+        height: 250px;
+        background: linear-gradient(45deg, #007bff, #6f42c1);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    .campaign-status-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    .status-ativo {
+        background-color: #28a745;
+        color: white;
+    }
+    .status-planejamento {
+        background-color: #ffc107;
+        color: black;
+    }
+    .status-pausado {
+        background-color: #6c757d;
+        color: white;
+    }
+    .status-encerrado {
+        background-color: #dc3545;
+        color: white;
+    }
+    .participant-card {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    .participant-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .character-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    .action-buttons {
+        position: sticky;
+        top: 100px;
+        z-index: 100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Conteúdo principal -->
+        <div class="col-lg-8">
+            <!-- Banner da campanha -->
+            <div class="campaign-banner">
+                <i class="fas fa-dice-d20"></i>
+                <div class="campaign-status-badge status-{{ campanha.estado }}">
+                    {{ campanha.get_estado_display }}
+                </div>
+            </div>
+
+            <!-- Informações básicas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-info-circle"></i> Informações da Campanha</h3>
+                </div>
+                <div class="card-body">
+                    <h1>{{ campanha.nome }}</h1>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-gamepad"></i> Sistema:</strong> {{ campanha.sistema_jogo.nome }}</p>
+                            <p><strong><i class="fas fa-user"></i> Organizador:</strong> {{ campanha.organizador.nome_completo }}</p>
+                            <p><strong><i class="fas fa-calendar"></i> Criada em:</strong> {{ campanha.data_criacao|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-users"></i> Participantes:</strong> 
+                               {{ participantes.count }}/{{ campanha.max_jogadores|default:"∞" }}</p>
+                            <p><strong><i class="fas fa-eye"></i> Visibilidade:</strong> 
+                               {% if campanha.publica %}Pública{% else %}Privada{% endif %}</p>
+                            {% if campanha.data_inicio %}
+                                <p><strong><i class="fas fa-play"></i> Início:</strong> {{ campanha.data_inicio|date:"d/m/Y" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h5><i class="fas fa-align-left"></i> Descrição</h5>
+                    <p class="text-justify">{{ campanha.descricao|linebreaks }}</p>
+                    
+                    <!-- Regras especiais serão implementadas via configurações_gerais no futuro -->
+                    {% if campanha.configuracoes_gerais %}
+                        <h5><i class="fas fa-gavel"></i> Configurações Especiais</h5>
+                        <div class="alert alert-info">
+                            {% for key, value in campanha.configuracoes_gerais.items %}
+                                <strong>{{ key|title }}:</strong> {{ value }}<br>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sessões de IA GM -->
+            {% if sessoes_ia or eh_organizador %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="fas fa-dice-d20"></i> Sessões de IA GM 
+                        {% if sessao_ativa %}<span class="badge bg-success">Ativa</span>{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if sessao_ativa %}
+                        <div class="alert alert-success">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1"><i class="fas fa-play-circle"></i> {{ sessao_ativa.nome }}</h6>
+                                    <p class="mb-1">{{ sessao_ativa.descricao|truncatewords:15 }}</p>
+                                    <small class="text-muted">
+                                        Estilo: {{ sessao_ativa.get_estilo_narrativo_display }} | 
+                                        Última atividade: {{ sessao_ativa.data_atualizacao|timesince }} atrás
+                                    </small>
+                                </div>
+                                {% if eh_organizador or status_participacao.esta_participando %}
+                                <a href="{% url 'ia_gm:sessao' sessao_ativa.id %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-right"></i> Acessar
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if sessoes_ia %}
+                        <div class="row">
+                            {% for sessao in sessoes_ia|slice:":4" %}
+                                {% if not sessao.ativa %}
+                                    <div class="col-md-6 mb-2">
+                                        <div class="card card-body p-3">
+                                            <h6 class="mb-1">{{ sessao.nome }}</h6>
+                                            <p class="mb-1 small text-muted">{{ sessao.descricao|truncatewords:10 }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    {{ sessao.data_criacao|date:"d/m/Y" }}
+                                                </small>
+                                                {% if eh_organizador or status_participacao.esta_participando %}
+                                                <a href="{% url 'ia_gm:sessao' sessao.id %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-history"></i> Ver
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {% if eh_organizador %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-dice-d20 fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Nenhuma sessão de IA GM criada ainda.</p>
+                                <a href="{% url 'ia_gm:criar_sessao' campanha.id %}" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle"></i> Criar Primeira Sessão IA GM
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-dice-d20 fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">O organizador ainda não criou sessões de IA GM.</p>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Participantes -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="fas fa-users"></i> Participantes ({{ participantes.count }})</h4>
+                </div>
+                <div class="card-body">
+                    {% if participantes %}
+                        <div class="row">
+                            {% for participante in participantes %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="participant-card p-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">{{ participante.usuario.nome_completo }}</h6>
+                                                {% if participante.personagem %}
+                                                    <div class="character-info">
+                                                        <p class="mb-1"><strong>Personagem:</strong> {{ participante.personagem.nome }}</p>
+                                                        <p class="mb-1"><strong>Nível:</strong> {{ participante.personagem.nivel }}</p>
+                                                        {% if participante.personagem.classes %}
+                                                            <p class="mb-0"><strong>Classe(s):</strong> 
+                                                                {% for classe in participante.personagem.classes %}
+                                                                    {{ classe.nome }}{% if not forloop.last %}, {% endif %}
+                                                                {% endfor %}
+                                                            </p>
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <small class="text-muted">Personagem não definido</small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-end">
+                                                <small class="text-muted">
+                                                    {{ participante.data_participacao|date:"d/m/Y" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhum participante ativo ainda.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar com ações -->
+        <div class="col-lg-4">
+            <div class="action-buttons d-lg-block">
+                <!-- Mobile: Mostrar apenas em offcanvas -->
+                <div class="d-lg-none mb-3">
+                    <button class="btn btn-primary w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#actionsSidebar">
+                        <i class="fas fa-cog"></i> Ações da Campanha
+                    </button>
+                </div>
+                <!-- Botões de navegação -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <a href="{% url 'campanhas:publicas' %}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-arrow-left"></i> Voltar às Campanhas
+                        </a>
+                        <a href="{% url 'campanhas:minhas' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-user"></i> Minhas Campanhas
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Ações do usuário -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-cogs"></i> Ações</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if eh_organizador %}
+                            <!-- Organizador -->
+                            <a href="{% url 'campanhas:gerenciar' campanha.id %}" class="btn btn-success w-100 mb-2">
+                                <i class="fas fa-cog"></i> Gerenciar Campanha
+                            </a>
+                            
+                            <!-- Sessões de IA GM -->
+                            {% if sessao_ativa %}
+                                <a href="{% url 'ia_gm:sessao' sessao_ativa.id %}" class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-dice-d20"></i> Continuar Sessão IA GM
+                                </a>
+                            {% else %}
+                                <a href="{% url 'ia_gm:criar_sessao' campanha.id %}" class="btn btn-outline-primary w-100 mb-2">
+                                    <i class="fas fa-plus-circle"></i> Criar Sessão IA GM
+                                </a>
+                            {% endif %}
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-crown"></i> Você é o organizador desta campanha.
+                            </div>
+                        
+                        {% elif status_participacao.esta_participando %}
+                            <!-- Participante ativo -->
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> Você está participando desta campanha!
+                            </div>
+                            
+                            <!-- Acesso às Sessões de IA GM -->
+                            {% if sessao_ativa %}
+                                <a href="{% url 'ia_gm:sessao' sessao_ativa.id %}" class="btn btn-primary w-100 mb-3">
+                                    <i class="fas fa-dice-d20"></i> Entrar na Sessão IA GM
+                                </a>
+                            {% elif sessoes_ia %}
+                                <div class="mb-3">
+                                    <small class="text-muted">Sessões IA GM disponíveis:</small>
+                                    {% for sessao in sessoes_ia|slice:":3" %}
+                                        <a href="{% url 'ia_gm:sessao' sessao.id %}" class="btn btn-outline-secondary btn-sm w-100 mb-1">
+                                            <i class="fas fa-history"></i> {{ sessao.nome }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            {% if status_participacao.personagem %}
+                                <div class="mb-3">
+                                    <h6>Seu Personagem:</h6>
+                                    <div class="character-info">
+                                        <p class="mb-1"><strong>{{ status_participacao.personagem.nome }}</strong></p>
+                                        <p class="mb-1">Nível {{ status_participacao.personagem.nivel }}</p>
+                                        {% if status_participacao.personagem.classes %}
+                                            <p class="mb-0">
+                                                {% for classe in status_participacao.personagem.classes %}
+                                                    {{ classe.nome }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Botão para sair -->
+                            <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#sairCampanhaModal">
+                                <i class="fas fa-sign-out-alt"></i> Sair da Campanha
+                            </button>
+
+                        {% elif status_participacao.tem_participacao_pendente %}
+                            <!-- Participação pendente -->
+                            {% if status_participacao.pode_definir_personagem %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-clock"></i> Você precisa definir um personagem!
+                                </div>
+                                
+                                {% if personagens_compativeis %}
+                                    <form method="post" action="{% url 'campanhas:definir_personagem' campanha.id %}">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <label for="personagem_id" class="form-label">Escolha seu personagem:</label>
+                                            <select class="form-select" id="personagem_id" name="personagem_id" required>
+                                                <option value="">Selecione um personagem...</option>
+                                                {% for personagem in personagens_compativeis %}
+                                                    <option value="{{ personagem.id }}">
+                                                        {{ personagem.nome }} (Nível {{ personagem.nivel }})
+                                                        {% if personagem.classes %} - {{ personagem.classes.0.nome }}{% endif %}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-check"></i> Definir Personagem
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <p><i class="fas fa-exclamation-triangle"></i> Você não possui personagens compatíveis com esta campanha.</p>
+                                        <a href="{% url 'personagens:criar' %}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-plus"></i> Criar Personagem
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-clock"></i> Sua inscrição está aguardando aprovação do organizador.
+                                </div>
+                            {% endif %}
+
+                        {% elif pode_participar.pode_participar %}
+                            <!-- Pode se inscrever -->
+                            <div class="alert alert-success">
+                                <i class="fas fa-plus-circle"></i> Você pode se inscrever nesta campanha!
+                            </div>
+                            
+                            <form method="post" action="{% url 'campanhas:participar' campanha.id %}">
+                                {% csrf_token %}
+                                
+                                {% if personagens_compativeis %}
+                                    <div class="mb-3">
+                                        <label for="personagem_id" class="form-label">Personagem (opcional):</label>
+                                        <select class="form-select" id="personagem_id" name="personagem_id">
+                                            <option value="">Definir depois...</option>
+                                            {% for personagem in personagens_compativeis %}
+                                                <option value="{{ personagem.id }}">
+                                                    {{ personagem.nome }} (Nível {{ personagem.nivel }})
+                                                    {% if personagem.classes %} - {{ personagem.classes.0.nome }}{% endif %}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">Você pode definir ou alterar o personagem depois.</div>
+                                    </div>
+                                {% endif %}
+                                
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-user-plus"></i> Participar da Campanha
+                                </button>
+                            </form>
+
+                        {% else %}
+                            <!-- Não pode participar -->
+                            <div class="alert alert-warning">
+                                <p><i class="fas fa-exclamation-triangle"></i> {{ pode_participar.motivo }}</p>
+                                {% if pode_participar.sugestao %}
+                                    <small>{{ pode_participar.sugestao }}</small>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Informações adicionais -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-info"></i> Informações</h6>
+                    </div>
+                    <div class="card-body">
+                        <small class="text-muted">
+                            <p><strong>Sistema:</strong> {{ campanha.sistema_jogo.nome }}</p>
+                            <p><strong>Estado:</strong> {{ campanha.get_estado_display }}</p>
+                            <p><strong>Criada em:</strong> {{ campanha.data_criacao|date:"d/m/Y" }}</p>
+                            {% if campanha.data_inicio %}
+                                <p><strong>Início:</strong> {{ campanha.data_inicio|date:"d/m/Y" }}</p>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para sair da campanha -->
+<div class="modal fade" id="sairCampanhaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-sign-out-alt"></i> Sair da Campanha
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'campanhas:sair' campanha.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Tem certeza que deseja sair da campanha <strong>{{ campanha.nome }}</strong>?</p>
+                    
+                    <div class="mb-3">
+                        <label for="motivo" class="form-label">Motivo (opcional):</label>
+                        <textarea class="form-control" id="motivo" name="motivo" rows="3" 
+                                  placeholder="Descreva o motivo para sair da campanha..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Esta ação não pode ser desfeita. Você precisará se inscrever novamente se quiser voltar.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i> Confirmar Saída
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas para ações em mobile -->
+<div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="actionsSidebar">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Ações da Campanha</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <!-- Duplicar o conteúdo da sidebar para mobile -->
+        {% if eh_organizador %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <a href="{% url 'campanhas:gerenciar' campanha.id %}" class="btn btn-success w-100 mb-2">
+                        <i class="fas fa-cog"></i> Gerenciar Campanha
+                    </a>
+                    <div class="alert alert-info">
+                        <i class="fas fa-crown"></i> Você é o organizador desta campanha.
+                    </div>
+                </div>
+            </div>
+        {% elif status_participacao.esta_participando %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> Você está participando!
+                    </div>
+                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#sairCampanhaModal">
+                        <i class="fas fa-sign-out-alt"></i> Sair da Campanha
+                    </button>
+                </div>
+            </div>
+        {% elif pode_participar.pode_participar %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <form method="post" action="{% url 'campanhas:participar' campanha.id %}">
+                        {% csrf_token %}
+                        {% if personagens_compativeis %}
+                            <div class="mb-3">
+                                <label for="personagem_id_mobile" class="form-label">Personagem:</label>
+                                <select class="form-select" id="personagem_id_mobile" name="personagem_id">
+                                    <option value="">Definir depois...</option>
+                                    {% for personagem in personagens_compativeis %}
+                                        <option value="{{ personagem.id }}">
+                                            {{ personagem.nome }} (Nível {{ personagem.nivel }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-user-plus"></i> Participar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
