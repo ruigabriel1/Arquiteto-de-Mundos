@@ -1,0 +1,18 @@
+[build]
+builder = "nixpacks"
+
+[build.buildCommand]
+command = "python manage.py collectstatic --noinput"
+
+[deploy]
+startCommand = "python manage.py migrate --noinput && gunicorn unified_chronicles.wsgi --log-file - --bind 0.0.0.0:$PORT"
+
+[deploy.healthcheckPath]
+path = "/"
+
+[deploy.healthcheckTimeout]
+timeout = 300
+
+[env]
+PYTHONPATH = "/app:$PYTHONPATH"
+DJANGO_SETTINGS_MODULE = "unified_chronicles.settings"
