@@ -5,18 +5,17 @@ Plataforma Virtual de RPG para D&D 5e e Tormenta20
 
 import os
 from pathlib import Path
-from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 DJANGO_APPS = [
@@ -88,7 +87,7 @@ ASGI_APPLICATION = 'unified_chronicles.asgi.application'
 import dj_database_url
 
 default_db_url = f'sqlite:///{BASE_DIR}/db.sqlite3'
-DATABASE_URL = config('DATABASE_URL', default=default_db_url)
+DATABASE_URL = os.environ.get('DATABASE_URL', default_db_url)
 
 DATABASES = {
     'default': dj_database_url.parse(DATABASE_URL)
