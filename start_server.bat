@@ -7,7 +7,7 @@ echo Iniciando o servidor...
 echo.
 
 REM Ativar ambiente virtual
-call venv\Scripts\activate
+call .venv\Scripts\activate
 
 REM Verificar se há migrações pendentes
 echo Verificando migrações...

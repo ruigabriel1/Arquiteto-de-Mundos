@@ -31,9 +31,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'rest_framework',
     'channels',
-    # TODO: Adicionar quando instalar dependências
-    # 'corsheaders',
-    # 'django_celery_beat',
+    'corsheaders',  # Ativado - já está instalado
 ]
 
 LOCAL_APPS = [
@@ -51,9 +49,9 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
-    # TODO: Adicionar quando instalar corsheaders
-    # 'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Ativado - primeiro na lista
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Para servir arquivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

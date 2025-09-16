@@ -30,7 +30,7 @@ def get_page_title(context):
         'campanhas:detalhes': 'Detalhes da Campanha',
         'campanhas:gerenciar': 'Gerenciar Campanha',
         
-        'personagens_web:lista': 'Meus Personagens',
+        'personagens_web:listar': 'Meus Personagens',
         'personagens_web:criar': 'Novo Personagem',
         'personagens_web:detalhes': 'Detalhes do Personagem',
         'personagens_web:editar': 'Editar Personagem',
@@ -84,7 +84,7 @@ def get_breadcrumbs(context):
     elif namespace == 'personagens_web':
         breadcrumbs.append({
             'name': 'Personagens',
-            'url': reverse('personagens_web:lista'),
+            'url': reverse('personagens_web:listar'),
             'icon': 'fas fa-user-circle'
         })
         

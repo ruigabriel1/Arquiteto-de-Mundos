@@ -1,937 +1,175 @@
 {% extends "base.html" %}
-{% load static %}
-{% load navigation_tags %}
 
-{% block title %}{% get_page_title %} - Unified Chronicles{% endblock %}
+{% block title %}Construtor de Personagem Avançado{% endblock %}
 
 {% block extra_css %}
 <style>
-    .character-builder {
-        background: rgba(26, 26, 26, 0.95);
-        backdrop-filter: blur(10px);
-        min-height: 100vh;
-    }
-    
-    .step-wizard {
-        margin-bottom: 2rem;
-    }
-    
-    .step-wizard .nav-pills {
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 1rem;
-        border-radius: 15px;
-    }
-    
-    .step-wizard .nav-link {
-        color: rgba(255, 255, 255, 0.7);
-        background: transparent;
-        border: none;
-        position: relative;
-        margin: 0 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .step-wizard .nav-link.active {
-        background: linear-gradient(135deg, #6f42c1, #2d1b69);
-        color: white;
-        box-shadow: 0 4px 15px rgba(111, 66, 193, 0.4);
-    }
-    
-    .step-wizard .nav-link::after {
-        content: '';
-        position: absolute;
-        right: -1.5rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 0;
-        height: 0;
-        border-left: 8px solid rgba(111, 66, 193, 0.3);
-        border-top: 8px solid transparent;
-        border-bottom: 8px solid transparent;
-    }
-    
-    .step-wizard .nav-link:last-child::after {
-        display: none;
-    }
-    
-    .race-card, .class-card {
-        background: rgba(255, 255, 255, 0.1);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 15px;
-        padding: 1.5rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        height: 100%;
-        position: relative;
-    }
-    
-    .race-card:hover, .class-card:hover {
-        border-color: #6f42c1;
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(111, 66, 193, 0.3);
-    }
-    
-    .race-card.selected, .class-card.selected {
-        border-color: #6f42c1;
-        background: rgba(111, 66, 193, 0.2);
-        box-shadow: 0 0 20px rgba(111, 66, 193, 0.5);
-    }
-    
-    .race-card h5, .class-card h5 {
-        color: #6f42c1;
-        font-weight: bold;
-        margin-bottom: 1rem;
-    }
-    
-    .race-badge, .class-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: linear-gradient(135deg, #6f42c1, #2d1b69);
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 8px;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .attribute-roller {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .attribute-input {
-        background: rgba(255, 255, 255, 0.1);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    
-    .attribute-input:focus {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: #6f42c1;
-        box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
-        color: white;
-    }
-    
-    .attribute-modifier {
-        font-size: 0.9rem;
-        color: rgba(255, 255, 255, 0.8);
-        margin-top: 0.25rem;
-    }
-    
-    .dice-button {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        border: none;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-    
-    .dice-button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-    }
-    
-    .character-preview {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        padding: 1.5rem;
-        position: sticky;
-        top: 100px;
-    }
-    
-    .character-avatar {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #6f42c1, #2d1b69);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1rem auto;
-        font-size: 3rem;
-        color: white;
-        box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
-    }
-    
-    .trait-tag {
-        background: rgba(111, 66, 193, 0.3);
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        margin: 0.25rem;
-        display: inline-block;
-    }
-    
-    .progress-indicator {
-        background: rgba(255, 255, 255, 0.1);
-        height: 8px;
-        border-radius: 4px;
-        margin: 1rem 0;
-        overflow: hidden;
-    }
-    
-    .progress-bar {
-        background: linear-gradient(90deg, #6f42c1, #28a745);
-        height: 100%;
-        border-radius: 4px;
-        transition: width 0.3s ease;
-    }
-    
-    .system-selector {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .system-option {
-        background: rgba(255, 255, 255, 0.1);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        padding: 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: center;
-    }
-    
-    .system-option:hover {
-        border-color: #6f42c1;
-    }
-    
-    .system-option.selected {
-        border-color: #6f42c1;
-        background: rgba(111, 66, 193, 0.2);
-    }
-    
-    .btn-next, .btn-prev {
-        padding: 0.75rem 2rem;
-        border-radius: 25px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-next {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        border: none;
-    }
-    
-    .btn-prev {
-        background: rgba(255, 255, 255, 0.1);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        color: white;
-    }
-    
-    .hidden {
-        display: none !important;
+    #raca-classe-wrapper, #detalhes-wrapper {
+        display: none; /* Escondidos por padrão */
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="character-builder">
-    <div class="container-fluid py-4">
-        <div class="row">
-            <!-- Formulário Principal -->
-            <div class="col-lg-8">
-                <!-- Cabeçalho -->
-                <div class="text-center mb-4">
-                    <h1 class="mb-2">
-                        <i class="fas fa-dice-d20 me-3"></i>
-                        Criar Novo Personagem
-                    </h1>
-                    <p class="text-muted">Construa seu herói para aventuras épicas</p>
-                </div>
+<div class="container">
+    <h1 class="text-center my-4">Construtor de Personagem Avançado</h1>
 
-                <!-- Wizard de Steps -->
-                <div class="step-wizard">
-                    <ul class="nav nav-pills" id="characterWizard" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="step1-tab" data-bs-toggle="pill" data-bs-target="#step1" type="button" role="tab">
-                                <i class="fas fa-cogs me-2"></i>Sistema
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="step2-tab" data-bs-toggle="pill" data-bs-target="#step2" type="button" role="tab">
-                                <i class="fas fa-users me-2"></i>Raça
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="step3-tab" data-bs-toggle="pill" data-bs-target="#step3" type="button" role="tab">
-                                <i class="fas fa-sword me-2"></i>Classe
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="step4-tab" data-bs-toggle="pill" data-bs-target="#step4" type="button" role="tab">
-                                <i class="fas fa-chart-bar me-2"></i>Atributos
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="step5-tab" data-bs-toggle="pill" data-bs-target="#step5" type="button" role="tab">
-                                <i class="fas fa-user-edit me-2"></i>Detalhes
-                            </button>
-                        </li>
-                    </ul>
-                </div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
 
-                <!-- Progress Indicator -->
-                <div class="progress-indicator">
-                    <div class="progress-bar" id="progressBar" style="width: 20%"></div>
-                </div>
-
-                <!-- Form Content -->
-                <form id="characterForm" method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="tab-content" id="characterWizardContent">
-                        
-                        <!-- Step 1: Sistema -->
-                        <div class="tab-pane fade show active" id="step1" role="tabpanel">
-                            <div class="system-selector">
-                                <h3 class="text-center mb-4">
-                                    <i class="fas fa-cogs text-primary me-2"></i>
-                                    Escolha o Sistema de Jogo
-                                </h3>
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <div class="system-option" data-system="dnd5e">
-                                            <i class="fas fa-dragon fa-3x mb-3 text-danger"></i>
-                                            <h5>D&D 5e</h5>
-                                            <p class="small mb-0">Dungeons & Dragons 5ª Edição</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="system-option" data-system="t20">
-                                            <i class="fas fa-magic fa-3x mb-3 text-warning"></i>
-                                            <h5>Tormenta20</h5>
-                                            <p class="small mb-0">Sistema Tormenta20</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="system-option" data-system="unified">
-                                            <i class="fas fa-balance-scale fa-3x mb-3 text-info"></i>
-                                            <h5>Unificado</h5>
-                                            <p class="small mb-0">Sistema Híbrido</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="selected-system" name="sistema" value="">
-                            </div>
-                        </div>
-
-                        <!-- Step 2: Raça -->
-                        <div class="tab-pane fade" id="step2" role="tabpanel">
-                            <h3 class="text-center mb-4">
-                                <i class="fas fa-users text-primary me-2"></i>
-                                Escolha sua Raça
-                            </h3>
-                            <div id="race-container" class="row g-3">
-                                <!-- Raças serão carregadas dinamicamente via JavaScript -->
-                            </div>
-                            <input type="hidden" id="selected-race" name="raca" value="">
-                        </div>
-
-                        <!-- Step 3: Classe -->
-                        <div class="tab-pane fade" id="step3" role="tabpanel">
-                            <h3 class="text-center mb-4">
-                                <i class="fas fa-sword text-primary me-2"></i>
-                                Escolha sua Classe
-                            </h3>
-                            <div id="class-container" class="row g-3">
-                                <!-- Classes serão carregadas dinamicamente via JavaScript -->
-                            </div>
-                            <input type="hidden" id="selected-class" name="classe" value="">
-                        </div>
-
-                        <!-- Step 4: Atributos -->
-                        <div class="tab-pane fade" id="step4" role="tabpanel">
-                            <h3 class="text-center mb-4">
-                                <i class="fas fa-chart-bar text-primary me-2"></i>
-                                Distribua os Atributos
-                            </h3>
-                            
-                            <div class="row mb-4">
-                                <div class="col-12 text-center">
-                                    <button type="button" class="dice-button" onclick="rollAllAttributes()">
-                                        <i class="fas fa-dice me-2"></i>Rolar Todos os Atributos (4d6, drop lowest)
-                                    </button>
-                                    <div class="form-text text-light mt-2">
-                                        Ou configure manualmente cada atributo
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="attribute-roller">
-                                        <label class="form-label">
-                                            <i class="fas fa-fist-raised me-2"></i>Força
-                                        </label>
-                                        <input type="number" class="form-control attribute-input" id="forca" name="forca" 
-                                               min="3" max="18" value="10" onchange="updateModifier('forca')">
-                                        <div class="attribute-modifier" id="forca-modifier">Modificador: +0</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="attribute-roller">
-                                        <label class="form-label">
-                                            <i class="fas fa-running me-2"></i>Destreza
-                                        </label>
-                                        <input type="number" class="form-control attribute-input" id="destreza" name="destreza" 
-                                               min="3" max="18" value="10" onchange="updateModifier('destreza')">
-                                        <div class="attribute-modifier" id="destreza-modifier">Modificador: +0</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="attribute-roller">
-                                        <label class="form-label">
-                                            <i class="fas fa-heart me-2"></i>Constituição
-                                        </label>
-                                        <input type="number" class="form-control attribute-input" id="constituicao" name="constituicao" 
-                                               min="3" max="18" value="10" onchange="updateModifier('constituicao')">
-                                        <div class="attribute-modifier" id="constituicao-modifier">Modificador: +0</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="attribute-roller">
-                                        <label class="form-label">
-                                            <i class="fas fa-brain me-2"></i>Inteligência
-                                        </label>
-                                        <input type="number" class="form-control attribute-input" id="inteligencia" name="inteligencia" 
-                                               min="3" max="18" value="10" onchange="updateModifier('inteligencia')">
-                                        <div class="attribute-modifier" id="inteligencia-modifier">Modificador: +0</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="attribute-roller">
-                                        <label class="form-label">
-                                            <i class="fas fa-eye me-2"></i>Sabedoria
-                                        </label>
-                                        <input type="number" class="form-control attribute-input" id="sabedoria" name="sabedoria" 
-                                               min="3" max="18" value="10" onchange="updateModifier('sabedoria')">
-                                        <div class="attribute-modifier" id="sabedoria-modifier">Modificador: +0</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="attribute-roller">
-                                        <label class="form-label">
-                                            <i class="fas fa-comments me-2"></i>Carisma
-                                        </label>
-                                        <input type="number" class="form-control attribute-input" id="carisma" name="carisma" 
-                                               min="3" max="18" value="10" onchange="updateModifier('carisma')">
-                                        <div class="attribute-modifier" id="carisma-modifier">Modificador: +0</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Step 5: Detalhes -->
-                        <div class="tab-pane fade" id="step5" role="tabpanel">
-                            <h3 class="text-center mb-4">
-                                <i class="fas fa-user-edit text-primary me-2"></i>
-                                Detalhes do Personagem
-                            </h3>
-                            
-                            <div class="row g-3">
-                                <div class="col-md-6 mb-3">
-                                    <label for="nome" class="form-label">
-                                        <i class="fas fa-signature me-2"></i>Nome do Personagem *
-                                    </label>
-                                    <input type="text" class="form-control" id="nome" name="nome" required
-                                           placeholder="Digite o nome do seu herói...">
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="campanha" class="form-label">
-                                        <i class="fas fa-flag me-2"></i>Campanha *
-                                    </label>
-                                    <select class="form-select" id="campanha" name="campanha" required>
-                                        <option value="">Selecione uma campanha</option>
-                                        {% for camp in campanhas %}
-                                            <option value="{{ camp.id }}">{{ camp.nome }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                
-                                <div class="col-12 mb-3">
-                                    <label for="historia" class="form-label">
-                                        <i class="fas fa-book me-2"></i>História de Fundo
-                                    </label>
-                                    <textarea class="form-control" id="historia" name="historia" rows="4"
-                                              placeholder="Conte a história do seu personagem, sua origem, motivações..."></textarea>
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="personalidade" class="form-label">
-                                        <i class="fas fa-theater-masks me-2"></i>Personalidade
-                                    </label>
-                                    <textarea class="form-control" id="personalidade" name="personalidade" rows="3"
-                                              placeholder="Traços de personalidade, ideais, vínculos..."></textarea>
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="avatar" class="form-label">
-                                        <i class="fas fa-image me-2"></i>Avatar (Opcional)
-                                    </label>
-                                    <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
-                                    <div class="form-text">JPG, PNG ou GIF (máx. 5MB)</div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- Navigation Buttons -->
-                    <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-prev" id="prevBtn" onclick="changeStep(-1)" disabled>
-                            <i class="fas fa-chevron-left me-2"></i>Anterior
-                        </button>
-                        <button type="button" class="btn btn-next" id="nextBtn" onclick="changeStep(1)">
-                            Próximo<i class="fas fa-chevron-right ms-2"></i>
-                        </button>
-                        <button type="submit" class="btn btn-success hidden" id="submitBtn">
-                            <i class="fas fa-check me-2"></i>Criar Personagem
-                        </button>
-                    </div>
-                </form>
+        <!-- PASSO 1: SELEÇÃO DE SISTEMA -->
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="mb-0">Passo 1: Escolha o Sistema de Jogo</h5></div>
+            <div class="card-body">
+                <select class="form-select" id="sistema-selector" name="sistema_slug">
+                    <option value="">-- Selecione um sistema --</option>
+                    {% for sistema in sistemas %}
+                        <option value="{{ sistema.slug }}">{{ sistema.nome }}</option>
+                    {% endfor %}
+                    <option value="hibrido">Híbrido (Todos os Sistemas)</option>
+                </select>
             </div>
+        </div>
 
-            <!-- Preview do Personagem -->
-            <div class="col-lg-4">
-                <div class="character-preview">
-                    <div class="text-center mb-3">
-                        <h4><i class="fas fa-eye me-2"></i>Preview</h4>
+        <!-- PASSO 2: RAÇA E CLASSE -->
+        <div class="card mb-4" id="raca-classe-wrapper">
+            <div class="card-header"><h5 class="mb-0">Passo 2: Escolha a Raça e Classe</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="raca-select" class="form-label">Raça</label>
+                        <select class="form-select" id="raca-select" name="raca" disabled>
+                            <option>Selecione um sistema primeiro</option>
+                        </select>
                     </div>
-                    
-                    <div class="character-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    
-                    <div class="text-center mb-3">
-                        <h5 id="preview-name">Novo Personagem</h5>
-                        <div id="preview-race-class" class="text-muted">
-                            <span id="preview-race">Selecione uma raça</span> -
-                            <span id="preview-class">Selecione uma classe</span>
-                        </div>
-                        <div id="preview-system" class="small text-muted mt-1">
-                            Sistema: <span>Não selecionado</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <h6>Atributos</h6>
-                        <div class="row text-center small">
-                            <div class="col-6 mb-2">
-                                <div>FOR: <span id="preview-forca">10</span></div>
-                                <div>DES: <span id="preview-destreza">10</span></div>
-                                <div>CON: <span id="preview-constituicao">10</span></div>
-                            </div>
-                            <div class="col-6 mb-2">
-                                <div>INT: <span id="preview-inteligencia">10</span></div>
-                                <div>SAB: <span id="preview-sabedoria">10</span></div>
-                                <div>CAR: <span id="preview-carisma">10</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="preview-traits" class="mb-3">
-                        <h6>Características</h6>
-                        <div id="race-traits"></div>
-                        <div id="class-traits"></div>
-                    </div>
-                    
-                    <div class="text-center">
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Preview atualiza conforme você constrói seu personagem
-                        </small>
+                    <div class="col-md-6 mb-3">
+                        <label for="classe-select" class="form-label">Classe</label>
+                        <select class="form-select" id="classe-select" name="classe" disabled>
+                            <option>Selecione um sistema primeiro</option>
+                        </select>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- PASSO 3: DETALHES FINAIS -->
+        <div class="card mb-4" id="detalhes-wrapper">
+            <div class="card-header"><h5 class="mb-0">Passo 3: Detalhes Finais</h5></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome do Personagem *</label>
+                    <input type="text" class="form-control" id="nome" name="nome" required>
+                </div>
+                <div class="mb-3">
+                    <label for="campanha" class="form-label">Campanha *</label>
+                    <select class="form-select" id="campanha" name="campanha" required>
+                         <option value="">-- Selecione uma campanha --</option>
+                        {% for camp in campanhas %}
+                            <option value="{{ camp.id }}">{{ camp.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="historia" class="form-label">História</label>
+                    <textarea class="form-control" name="historia" rows="4"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary btn-lg" disabled id="submit-button">Criar Personagem</button>
+        </div>
+    </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-let currentStep = 1;
-let maxStep = 5;
-let selectedSystem = '';
-let selectedRace = null;
-let selectedClass = null;
-let systemData = {};
-
-// Inicialização
 document.addEventListener('DOMContentLoaded', function() {
-    updateModifiers();
-    loadSystemData();
-});
+    const sistemaSelector = document.getElementById('sistema-selector');
+    const racaClasseWrapper = document.getElementById('raca-classe-wrapper');
+    const detalhesWrapper = document.getElementById('detalhes-wrapper');
+    const racaSelect = document.getElementById('raca-select');
+    const classeSelect = document.getElementById('classe-select');
+    const nomeInput = document.getElementById('nome');
+    const campanhaSelect = document.getElementById('campanha');
+    const submitButton = document.getElementById('submit-button');
 
-// Navegação entre steps
-function changeStep(direction) {
-    const newStep = currentStep + direction;
-    
-    if (newStep < 1 || newStep > maxStep) return;
-    
-    // Validar step atual antes de avançar
-    if (direction > 0 && !validateCurrentStep()) {
-        return;
-    }
-    
-    currentStep = newStep;
-    updateStepDisplay();
-    updateProgress();
-    updateNavigationButtons();
-}
+    // --- EVENT LISTENERS ---
+    sistemaSelector.addEventListener('change', handleSystemChange);
+    racaSelect.addEventListener('change', validateForm);
+    classeSelect.addEventListener('change', validateForm);
+    nomeInput.addEventListener('input', validateForm);
+    campanhaSelect.addEventListener('change', validateForm);
 
-function validateCurrentStep() {
-    switch(currentStep) {
-        case 1:
-            if (!selectedSystem) {
-                showNotification('Selecione um sistema de jogo', 'warning');
-                return false;
-            }
-            return true;
-        case 2:
-            if (!selectedRace) {
-                showNotification('Selecione uma raça', 'warning');
-                return false;
-            }
-            return true;
-        case 3:
-            if (!selectedClass) {
-                showNotification('Selecione uma classe', 'warning');
-                return false;
-            }
-            return true;
-        case 4:
-            return true; // Atributos são opcionais (valores padrão)
-        case 5:
-            const nome = document.getElementById('nome').value.trim();
-            const campanha = document.getElementById('campanha').value;
-            if (!nome) {
-                showNotification('Digite o nome do personagem', 'warning');
-                return false;
-            }
-            if (!campanha) {
-                showNotification('Selecione uma campanha', 'warning');
-                return false;
-            }
-            return true;
-    }
-    return true;
-}
+    // --- HANDLER FUNCTIONS ---
+    function handleSystemChange() {
+        const sistemaSlug = this.value;
 
-function updateStepDisplay() {
-    // Atualizar tabs
-    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(pane => {
-        pane.classList.remove('show', 'active');
-    });
-    
-    const activeTab = document.getElementById(`step${currentStep}-tab`);
-    const activePane = document.getElementById(`step${currentStep}`);
-    
-    if (activeTab && activePane) {
-        activeTab.classList.add('active');
-        activePane.classList.add('show', 'active');
-    }
-}
+        racaSelect.innerHTML = '<option>Carregando...</option>';
+        classeSelect.innerHTML = '<option>Carregando...</option>';
+        racaSelect.disabled = true;
+        classeSelect.disabled = true;
+        detalhesWrapper.style.display = 'none';
+        validateForm(); // Re-valida o formulário, desabilitando o botão
 
-function updateProgress() {
-    const progressBar = document.getElementById('progressBar');
-    const progress = (currentStep / maxStep) * 100;
-    progressBar.style.width = progress + '%';
-}
+        if (sistemaSlug) {
+            racaClasseWrapper.style.display = 'block';
+            fetchRpgData(sistemaSlug);
+        } else {
+            racaClasseWrapper.style.display = 'none';
+        }
+    }
 
-function updateNavigationButtons() {
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    
-    prevBtn.disabled = currentStep === 1;
-    
-    if (currentStep === maxStep) {
-        nextBtn.classList.add('hidden');
-        submitBtn.classList.remove('hidden');
-    } else {
-        nextBtn.classList.remove('hidden');
-        submitBtn.classList.add('hidden');
-    }
-}
+    async function fetchRpgData(slug) {
+        try {
+            const data = await makeRequest(`/personagens/api/sistema-conteudo/${slug}/`);
+            if (data.error) throw new Error(data.error);
 
-// Sistema de jogo
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.system-option')) {
-        selectSystem(e.target.closest('.system-option'));
+            populateSelect(racaSelect, data.racas, 'Selecione uma raça');
+            populateSelect(classeSelect, data.classes, 'Selecione uma classe');
+
+            racaSelect.disabled = false;
+            classeSelect.disabled = false;
+            detalhesWrapper.style.display = 'block';
+            validateForm(); // Valida o formulário após carregar os dados
+
+        } catch (error) {
+            console.error('Erro ao buscar dados do sistema:', error);
+            racaSelect.innerHTML = '<option>Erro ao carregar raças</option>';
+            classeSelect.innerHTML = '<option>Erro ao carregar classes</option>';
+        }
     }
-    
-    if (e.target.closest('.race-card')) {
-        selectRace(e.target.closest('.race-card'));
+
+    // --- HELPER FUNCTIONS ---
+    function populateSelect(selectElement, items, placeholder) {
+        selectElement.innerHTML = `<option value="">-- ${placeholder} --</option>`;
+        if (!items || items.length === 0) {
+            selectElement.innerHTML = `<option value="">Nenhum item encontrado</option>`;
+            return;
+        }
+        items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = item.nome;
+            option.setAttribute('title', item.descricao || 'Sem descrição.');
+            selectElement.appendChild(option);
+        });
     }
-    
-    if (e.target.closest('.class-card')) {
-        selectClass(e.target.closest('.class-card'));
+
+    function validateForm() {
+        const systemIsValid = sistemaSelector.value !== '';
+        const raceIsValid = racaSelect.value !== '';
+        const classIsValid = classeSelect.value !== '';
+        const nameIsValid = nomeInput.value.trim() !== '';
+        const campaignIsValid = campanhaSelect.value !== '';
+
+        if (systemIsValid && raceIsValid && classIsValid && nameIsValid && campaignIsValid) {
+            submitButton.disabled = false;
+        } else {
+            submitButton.disabled = true;
+        }
     }
 });
-
-function selectSystem(element) {
-    document.querySelectorAll('.system-option').forEach(opt => opt.classList.remove('selected'));
-    element.classList.add('selected');
-    
-    selectedSystem = element.dataset.system;
-    document.getElementById('selected-system').value = selectedSystem;
-    document.querySelector('#preview-system span').textContent = element.querySelector('h5').textContent;
-    
-    loadRacesAndClasses();
-}
-
-async function loadSystemData() {
-    try {
-        // Simular carregamento de dados - em produção, fazer requisição AJAX
-        systemData = {
-            'dnd5e': { name: 'D&D 5e', races: [], classes: [] },
-            't20': { name: 'Tormenta20', races: [], classes: [] },
-            'unified': { name: 'Sistema Unificado', races: [], classes: [] }
-        };
-    } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-    }
-}
-
-async function loadRacesAndClasses() {
-    if (!selectedSystem) return;
-    
-    try {
-        // Fazer requisição AJAX para buscar raças e classes do sistema selecionado
-        const response = await fetch(`/api/sistema-conteudo/${selectedSystem}/`);
-        const data = await response.json();
-        
-        displayRaces(data.races || []);
-        displayClasses(data.classes || []);
-        
-    } catch (error) {
-        console.error('Erro ao carregar conteúdo:', error);
-        // Fallback com dados mockados
-        loadMockData();
-    }
-}
-
-function loadMockData() {
-    // Dados de exemplo (em produção, virão do backend)
-    const mockRaces = [
-        { id: 1, nome: 'Humano', descricao: 'Versáteis e adaptáveis', bonus: { 'todos': 1 } },
-        { id: 2, nome: 'Elfo', descricao: 'Ágeis e mágicos', bonus: { 'destreza': 2 } },
-        { id: 3, nome: 'Anão', descricao: 'Resistentes e habilidosos', bonus: { 'constituicao': 2 } }
-    ];
-    
-    const mockClasses = [
-        { id: 1, nome: 'Guerreiro', descricao: 'Especialista em combate', pv: 10 },
-        { id: 2, nome: 'Mago', descricao: 'Mestre das artes arcanas', pv: 6 },
-        { id: 3, nome: 'Ladino', descricao: 'Furtivo e habilidoso', pv: 8 }
-    ];
-    
-    displayRaces(mockRaces);
-    displayClasses(mockClasses);
-}
-
-function displayRaces(races) {
-    const container = document.getElementById('race-container');
-    container.innerHTML = '';
-    
-    races.forEach(race => {
-        const raceCard = createRaceCard(race);
-        container.appendChild(raceCard);
-    });
-}
-
-function displayClasses(classes) {
-    const container = document.getElementById('class-container');
-    container.innerHTML = '';
-    
-    classes.forEach(cls => {
-        const classCard = createClassCard(cls);
-        container.appendChild(classCard);
-    });
-}
-
-function createRaceCard(race) {
-    const div = document.createElement('div');
-    div.className = 'col-md-6 col-lg-4';
-    div.innerHTML = `
-        <div class="race-card" data-race-id="${race.id}" data-race-name="${race.nome}">
-            <div class="race-badge">${selectedSystem.toUpperCase()}</div>
-            <h5>${race.nome}</h5>
-            <p class="text-muted small">${race.descricao}</p>
-            <div class="mt-2">
-                ${Object.keys(race.bonus || {}).map(attr => 
-                    `<span class="trait-tag">+${race.bonus[attr]} ${attr === 'todos' ? 'Todos' : attr.toUpperCase()}</span>`
-                ).join('')}
-            </div>
-        </div>
-    `;
-    return div;
-}
-
-function createClassCard(cls) {
-    const div = document.createElement('div');
-    div.className = 'col-md-6 col-lg-4';
-    div.innerHTML = `
-        <div class="class-card" data-class-id="${cls.id}" data-class-name="${cls.nome}">
-            <div class="class-badge">PV: ${cls.pv || 'N/A'}</div>
-            <h5>${cls.nome}</h5>
-            <p class="text-muted small">${cls.descricao}</p>
-        </div>
-    `;
-    return div;
-}
-
-function selectRace(element) {
-    document.querySelectorAll('.race-card').forEach(card => card.classList.remove('selected'));
-    element.classList.add('selected');
-    
-    selectedRace = {
-        id: element.dataset.raceId,
-        name: element.dataset.raceName
-    };
-    
-    document.getElementById('selected-race').value = selectedRace.id;
-    document.getElementById('preview-race').textContent = selectedRace.name;
-    
-    // Aplicar bônus raciais (implementar lógica específica)
-    applyRacialBonuses(selectedRace);
-}
-
-function selectClass(element) {
-    document.querySelectorAll('.class-card').forEach(card => card.classList.remove('selected'));
-    element.classList.add('selected');
-    
-    selectedClass = {
-        id: element.dataset.classId,
-        name: element.dataset.className
-    };
-    
-    document.getElementById('selected-class').value = selectedClass.id;
-    document.getElementById('preview-class').textContent = selectedClass.name;
-    
-    // Aplicar características de classe
-    applyClassFeatures(selectedClass);
-}
-
-function applyRacialBonuses(race) {
-    // Implementar aplicação automática de bônus raciais
-    console.log('Aplicando bônus raciais:', race);
-}
-
-function applyClassFeatures(cls) {
-    // Implementar aplicação automática de características de classe
-    console.log('Aplicando características de classe:', cls);
-}
-
-// Sistema de atributos
-function updateModifier(attribute) {
-    const value = parseInt(document.getElementById(attribute).value) || 10;
-    const modifier = Math.floor((value - 10) / 2);
-    const modifierElement = document.getElementById(attribute + '-modifier');
-    
-    modifierElement.textContent = `Modificador: ${modifier >= 0 ? '+' : ''}${modifier}`;
-    
-    // Atualizar preview
-    document.getElementById('preview-' + attribute).textContent = value;
-}
-
-function updateModifiers() {
-    const attributes = ['forca', 'destreza', 'constituicao', 'inteligencia', 'sabedoria', 'carisma'];
-    attributes.forEach(attr => updateModifier(attr));
-}
-
-function rollAllAttributes() {
-    const attributes = ['forca', 'destreza', 'constituicao', 'inteligencia', 'sabedoria', 'carisma'];
-    
-    attributes.forEach(attr => {
-        const roll = rollAttribute();
-        document.getElementById(attr).value = roll;
-        updateModifier(attr);
-    });
-    
-    showNotification('Atributos rolados com sucesso!', 'success');
-}
-
-function rollAttribute() {
-    // Rolar 4d6, descartar o menor
-    const rolls = [];
-    for (let i = 0; i < 4; i++) {
-        rolls.push(Math.floor(Math.random() * 6) + 1);
-    }
-    rolls.sort((a, b) => b - a); // Ordem decrescente
-    return rolls.slice(0, 3).reduce((sum, roll) => sum + roll, 0); // Soma os 3 maiores
-}
-
-// Atualizar nome do personagem
-document.getElementById('nome').addEventListener('input', function() {
-    const name = this.value.trim() || 'Novo Personagem';
-    document.getElementById('preview-name').textContent = name;
-});
-
-// Submissão do formulário
-document.getElementById('characterForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (!validateCurrentStep()) {
-        return;
-    }
-    
-    // Preparar dados para submissão
-    const formData = new FormData(this);
-    
-    // Adicionar dados do personagem construído
-    formData.append('sistema_selecionado', selectedSystem);
-    formData.append('raca_selecionada', JSON.stringify(selectedRace));
-    formData.append('classe_selecionada', JSON.stringify(selectedClass));
-    
-    // Submeter formulário
-    this.submit();
-});
-
-function showNotification(message, type = 'info') {
-    // Implementar sistema de notificações
-    console.log(`[${type.toUpperCase()}] ${message}`);
-    
-    // Usar bootstrap toast ou alert
-    const alertClass = {
-        'success': 'alert-success',
-        'warning': 'alert-warning', 
-        'error': 'alert-danger',
-        'info': 'alert-info'
-    }[type] || 'alert-info';
-    
-    const alert = document.createElement('div');
-    alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
-    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(alert);
-    
-    setTimeout(() => {
-        alert.remove();
-    }, 5000);
-}
-
-// Inicializar modifiers na primeira carga
-updateModifiers();
 </script>
 {% endblock %}

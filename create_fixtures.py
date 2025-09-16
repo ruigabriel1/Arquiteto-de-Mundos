@@ -302,7 +302,7 @@ def criar_campanhas_teste(sistemas):
         campanha, created = Campanha.objects.get_or_create(
             nome=camp_data['nome'],
             defaults={
-                'mestre': mestre,
+                'organizador': mestre,
                 'sistema_jogo': camp_data['sistema'],
                 'descricao': camp_data['descricao'],
                 'nivel_inicial': camp_data['nivel_inicial'],

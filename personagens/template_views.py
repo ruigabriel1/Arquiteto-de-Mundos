@@ -16,7 +16,7 @@ from .forms import PersonagemForm
 def listar_personagens(request):
     """Lista todos os personagens do usuário atual."""
     personagens = Personagem.objects.filter(usuario=request.user).select_related(
-        'campanha', 'sistema', 'raca', 'classe'
+        'campanha', 'sistema_jogo'
     ).order_by('-data_criacao')
     
     context = {
