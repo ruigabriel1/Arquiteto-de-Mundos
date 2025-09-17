@@ -61,8 +61,8 @@
                     <input type="text" class="form-control" id="nome" name="nome" required>
                 </div>
                 <div class="mb-3">
-                    <label for="campanha" class="form-label">Campanha *</label>
-                    <select class="form-select" id="campanha" name="campanha" required>
+                    <label for="id_campanha" class="form-label">Campanha *</label>
+                    <select class="form-select" id="id_campanha" name="campanha" required>
                          <option value="">-- Selecione uma campanha --</option>
                         {% for camp in campanhas %}
                             <option value="{{ camp.id }}">{{ camp.nome }}</option>
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const racaSelect = document.getElementById('raca-select');
     const classeSelect = document.getElementById('classe-select');
     const nomeInput = document.getElementById('nome');
-    const campanhaSelect = document.getElementById('campanha');
+    const campanhaSelect = document.getElementById('id_campanha'); // Alterado aqui
     const submitButton = document.getElementById('submit-button');
 
     // --- EVENT LISTENERS ---

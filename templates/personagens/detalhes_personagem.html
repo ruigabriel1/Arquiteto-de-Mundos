@@ -312,7 +312,7 @@
             </div>
             <div class="modal-footer border-secondary">
                 <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                <form method="post" action="{% url 'personagens_web:excluir' personagem.id %}" style="display: inline;">
+                <form method="post" action="{% url 'personagens:deletar' personagem.id %}" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash me-2"></i>Excluir Definitivamente

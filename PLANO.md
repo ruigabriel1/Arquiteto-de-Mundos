@@ -1,4 +1,25 @@
-Compêndio de Dados Estruturados para Aplicações de RPG: D&D 5e e Tormenta 20Parte I: Compêndio de Dados de Dungeons & Dragons 5th EditionEsta parte fornece um conjunto de dados completo e estruturado para o sistema Dungeons & Dragons 5th Edition, projetado para integração direta em uma aplicação web. Inicia-se com uma explicação detalhada da arquitetura de dados em formato JSON, seguida pelos dados populados para raças, classes e equipamentos.Seção 1.1: Arquitetura de Dados para D&D 5eEsta seção define a estrutura JSON utilizada ao longo da Parte I. A arquitetura foi concebida para ser relacional, hierárquica e de fácil análise programática, permitindo que a aplicação do utilizador gere dinamicamente opções de personagem e calcule estatísticas.Estrutura de Nível SuperiorA raiz do arquivo JSON será um objeto denominado dnd5e, contendo quatro chaves primárias: races, classes, weapons e equipment. Esta separação garante modularidade e facilidade de acesso a categorias de dados distintas.Esquema de racesA chave races conterá um array de objetos, onde cada objeto representa uma raça jogável. A estrutura de cada objeto racial é a seguinte:JSON{
+# Compêndio de Dados Estruturados para Aplicações de RPG: D&D 5e e Tormenta 20
+
+## Parte I: Compêndio de Dados de Dungeons & Dragons 5th Edition
+
+Esta parte fornece um conjunto de dados completo e estruturado para o sistema Dungeons & Dragons 5th Edition, projetado para integração direta em uma aplicação web. Inicia-se com uma explicação detalhada da arquitetura de dados em formato JSON, seguida pelos dados populados para raças, classes e equipamentos.
+
+### Seção 1.1: Arquitetura de Dados para D&D 5e
+
+Esta seção define a estrutura JSON utilizada ao longo da Parte I. A arquitetura foi concebida para ser relacional, hierárquica e de fácil análise programática, permitindo que a aplicação do utilizador gere dinamicamente opções de personagem e calcule estatísticas.
+
+**Estrutura de Nível Superior**
+
+A raiz do arquivo JSON será um objeto denominado `dnd5e`, contendo quatro chaves primárias: `races`, `classes`, `weapons` e `equipment`. Esta separação garante modularidade e facilidade de acesso a categorias de dados distintas.
+
+**Esquema de `races`**
+
+A chave `races` conterá um array de objetos, onde cada objeto representa uma raça jogável.
+
+* **Nota de Design (Sub-raças Aninhadas):** A inclusão de sub-raças (`subraces`) como um array aninhado é deliberada. O sistema D&D 5e baseia-se num modelo de herança, onde uma sub-raça herda as características da raça parental. Ao aninhar os dados, a lógica da aplicação pode simplesmente agregar as características da raça base com as da sub-raça selecionada, espelhando a mecânica do jogo e simplificando o desenvolvimento.
+
+```json
+{
   "name": "String",
   "description": "String",
   "ability_score_increase": {
@@ -10,58 +31,83 @@ Compêndio de Dados Estruturados para Aplicações de RPG: D&D 5e e Tormenta 20P
     "Charisma": "Integer",
     "choice": {
       "choose": "Integer",
-      "from":
+      "from": ["String"]
     }
   },
   "size": "String",
   "speed": "Integer",
-  "languages":,
-  "traits":,
-  "subraces":
-    }
-  ]
+  "languages": ["String"],
+  "traits": ["Object"],
+  "subraces": ["Object"]
 }
-A inclusão de sub-raças (subraces) como um array aninhado dentro do objeto da raça principal é uma decisão de design deliberada. O sistema de regras de D&D 5e baseia-se num modelo de herança, onde uma sub-raça herda todas as características da sua raça parental, adicionando as suas próprias características únicas.1 Uma estrutura de dados plana exigiria que o desenvolvedor reconstruísse manualmente essa relação, resultando em código mais complexo e propenso a erros. Ao aninhar os dados, a lógica da aplicação pode simplesmente agregar as características da raça base com as da sub-raça selecionada, espelhando diretamente a mecânica do jogo e simplificando o desenvolvimento.Esquema de classesA chave classes conterá um array de objetos de classe, cada um com a seguinte estrutura:JSON{
+```
+
+**Esquema de `classes`**
+
+A chave `classes` conterá um array de objetos de classe.
+
+* **Nota de Design (Progressão e Escolhas):** Características de classe evoluem com o nível. A estrutura `class_features` inclui campos opcionais como `progression` (para mapear níveis a valores, ex: `{"1": "1d6", "3": "2d6"}`) e `choices` (um array de opções). Esta abordagem torna os dados "inteligentes", codificando a lógica de progressão diretamente na estrutura.
+
+```json
+{
   "name": "String",
   "description": "String",
   "hit_die": "String",
-  "primary_abilities":,
-  "saving_throw_proficiencies":,
+  "primary_abilities": ["String"],
+  "saving_throw_proficiencies": ["String"],
   "proficiencies": {
-    "armor":,
-    "weapons":,
-    "tools":,
+    "armor": ["String"],
+    "weapons": ["String"],
+    "tools": ["String"],
     "skills": {
       "choose": "Integer",
-      "from":
+      "from": ["String"]
     }
   },
   "starting_equipment": "String",
-  "class_features":
-    }
-  ],
+  "class_features": ["Object"],
   "subclass_archetype_name": "String",
   "subclass_level": "Integer",
-  "subclasses":
-    }
-  ]
+  "subclasses": ["Object"]
 }
-Muitas características de classe evoluem com o nível do personagem (por exemplo, o dano do Ataque Furtivo do Ladino) ou oferecem escolhas (por exemplo, o Estilo de Luta do Guerreiro). Para acomodar isso, a estrutura class_features inclui campos opcionais como progression e choices. O campo progression pode mapear níveis para valores específicos (por exemplo, {"1": "1d6", "3": "2d6",...}), permitindo que a aplicação calcule dinamicamente os bónus. O campo choices conteria um array de opções, cada uma com nome e descrição, permitindo que a interface do utilizador apresente as escolhas relevantes ao jogador. Esta abordagem torna os dados "inteligentes", codificando a lógica de progressão e escolha diretamente na estrutura, o que reduz a quantidade de lógica de jogo que precisa ser codificada na aplicação.Esquema de weapons e equipmentAs chaves weapons e equipment conterão arrays de objetos com estruturas simples para catalogar itens.Esquema de weapons:JSON{
+```
+
+**Esquema de `weapons` e `equipment`**
+
+Estruturas simples para catalogar itens.
+
+* **Nota de Design (Propriedade "Especial"):** Armas com a propriedade "Especial" (ex: Rede) indicam regras únicas. A aplicação deve ser programada para detetar esta propriedade e exibir uma descrição detalhada da sua mecânica única.
+
+**Esquema de `weapons`:**
+```json
+{
   "name": "String",
   "cost": "String",
   "damage_dice": "String",
   "damage_type": "String",
   "weight": "String",
   "category": "String",
-  "properties":
+  "properties": ["String"]
 }
-Esquema de equipment:JSON{
+```
+
+**Esquema de `equipment`:**
+```json
+{
   "name": "String",
   "category": "String",
   "cost": "String",
   "weight": "String"
 }
-Seção 1.2: Raças e Sub-raças JogáveisEsta seção contém os dados completos para as raças e sub-raças de D&D 5e, formatados de acordo com o esquema definido na Seção 1.1. Os dados foram compilados e sintetizados a partir de múltiplas fontes para garantir a sua completude.1Raças do Player's HandbookJSON[
+```
+
+### Seção 1.2: Raças e Sub-raças Jogáveis
+
+Dados completos para as raças e sub-raças de D&D 5e.
+
+**Raças do Player's Handbook**
+```json
+[
   {
     "name": "Anão",
     "description": "Corajosos e resistentes, os anões são conhecidos como hábeis guerreiros, mineiros e trabalhadores de pedra e metal. Embora tenham menos de 1,50 metro de altura, os anões são tão largos e compactos que podem pesar tanto quanto um humano com quase 60 centímetros a mais.",
@@ -69,13 +115,21 @@ Seção 1.2: Raças e Sub-raças JogáveisEsta seção contém os dados completo
     "size": "Médio",
     "speed": 25,
     "languages": ["Comum", "Anão"],
-    "traits":,
-    "subraces":
+    "traits": [],
+    "subraces": [
+      {
+        "name": "Anão da Colina",
+        "ability_score_increase": { "Wisdom": 1 },
+        "traits": [
+          { "name": "Resiliência Anã", "description": "Você tem vantagem em testes de resistência contra veneno e resistência a dano de veneno." }
+        ]
       },
       {
         "name": "Anão da Montanha",
         "ability_score_increase": { "Strength": 2 },
-        "traits":
+        "traits": [
+          { "name": "Treinamento de Armadura Anã", "description": "Você tem proficiência com armaduras leves e médias." }
+        ]
       }
     ]
   },
@@ -86,18 +140,34 @@ Seção 1.2: Raças e Sub-raças JogáveisEsta seção contém os dados completo
     "size": "Médio",
     "speed": 30,
     "languages": ["Comum", "Élfico"],
-    "traits":,
-    "subraces":
+    "traits": [
+        { "name": "Visão no Escuro", "description": "Você enxerga na penumbra a até 18 metros como se fosse luz plena, e na escuridão como se fosse penumbra." },
+        { "name": "Ancestral Feérico", "description": "Você tem vantagem em testes de resistência contra ser enfeitiçado e a magia não pode colocá-lo para dormir."}
+    ],
+    "subraces": [
+      {
+        "name": "Alto Elfo",
+        "ability_score_increase": { "Intelligence": 1 },
+        "traits": [
+            { "name": "Treinamento em Armas Élficas", "description": "Você tem proficiência com espadas longas, espadas curtas, arcos curtos e arcos longos." },
+            { "name": "Truque", "description": "Você conhece um truque da lista de magias do Mago. Inteligência é seu atributo de conjuração para ele."}
+        ]
       },
       {
         "name": "Elfo da Floresta",
         "ability_score_increase": { "Wisdom": 1 },
-        "traits":
+        "traits": [
+            { "name": "Pés Ligeiros", "description": "Seu deslocamento base aumenta para 10,5 metros." },
+            { "name": "Máscara da Natureza", "description": "Você pode tentar se esconder mesmo quando estiver apenas levemente obscurecido por folhagem, chuva forte, neve caindo, névoa e outros fenômenos naturais." }
+        ]
       },
       {
         "name": "Elfo Negro (Drow)",
         "ability_score_increase": { "Charisma": 1 },
-        "traits":
+        "traits": [
+            { "name": "Visão no Escuro Superior", "description": "Sua visão no escuro tem um raio de 36 metros." },
+            { "name": "Sensibilidade à Luz Solar", "description": "Você tem desvantagem em jogadas de ataque e testes de Sabedoria (Percepção) que dependem da visão quando você, o alvo do seu ataque ou o que você está tentando perceber está sob luz solar direta."}
+        ]
       }
     ]
   },
@@ -108,14 +178,70 @@ Seção 1.2: Raças e Sub-raças JogáveisEsta seção contém os dados completo
     "size": "Médio",
     "speed": 30,
     "languages": ["Comum", "Um idioma adicional de sua escolha"],
-    "traits":,
-    "subraces": } },
-        "traits":
-      }
-    ]
+    "traits": [],
+    "subraces": []
   }
 ]
-Raças ExpandidasAlém das raças do livro base, o universo de D&D 5e inclui uma vasta gama de outras opções provenientes de suplementos oficiais. A lista a seguir, compilada a partir de fontes como o Volo's Guide to Monsters e o Mordenkainen's Tome of Foes, será estruturada da mesma forma.4Aasimar: Com as sub-raças Caído, Protetor e Flagelo.Firbolg: Gigantes gentis com magia druídica inata.Goliath: Humanoides montanheses fortes e competitivos.Kenku: Povo-pássaro amaldiçoado sem voz própria, que se comunica através da mímica.Lizardfolk: Répteis pragmáticos e sobreviventes dos pântanos.Tabaxi: Humanoides felinos curiosos e ágeis.Tritão: Guardiões dos oceanos profundos.Yuan-ti Pureblood: Humanoides com sangue de serpente, imunes a veneno e com resistência mágica.Bugbear, Goblin, Hobgoblin, Kobold, Orc: Raças tradicionalmente monstruosas, apresentadas como opções jogáveis.Gith: Com as sub-raças Githyanki e Githzerai, guerreiros psiónicos do Plano Astral.A tabela a seguir fornece uma referência rápida aos modificadores de atributos de cada raça, uma ferramenta essencial para a funcionalidade de filtragem na aplicação do utilizador.RaçaSub-raçaFORDESCONINTSABCARFlexível/EscolhaAnão-00+2000-Anão da Colina00+20+10-Anão da Montanha+20+2000-Elfo-0+20000-Alto Elfo0+20+100-Elfo da Floresta0+200+10-Elfo Negro (Drow)0+2000+1-Halfling-0+20000-Pés Leves0+2000+1-Robusto0+2+1000-HumanoPadrão+1+1+1+1+1+1-Variante------+1 em dois atributosDraconato-+20000+1-Gnomo-000+200-Gnomo da Floresta0+10+200-Gnomo da Pedra00+1+200-Meio-Elfo-00000+2+1 em dois outrosMeio-Orc-+20+1000-Tiefling-000+10+2-Seção 1.3: Classes de Personagem e SubclassesEsta seção apresenta os dados completos para as 13 classes oficiais de D&D 5e. Cada entrada de classe é um módulo autocontido, detalhando a progressão de nível 1 a 20 e aninhando todas as subclasses disponíveis. A compilação baseia-se numa síntese de múltiplas fontes para garantir precisão e profundidade.4A tabela seguinte resume as mecânicas centrais de cada classe, servindo como um guia de referência rápida.ClasseDado de VidaAtributo PrimárioProficiências em Testes de ResistênciaArtíficed8InteligênciaConstituição, InteligênciaBárbarod12ForçaForça, ConstituiçãoBardod8CarismaDestreza, CarismaBruxod8CarismaSabedoria, CarismaClérigod8SabedoriaSabedoria, CarismaDruidad8SabedoriaInteligência, SabedoriaFeiticeirod6CarismaConstituição, CarismaGuerreirod10Força ou DestrezaForça, ConstituiçãoLadinod8DestrezaDestreza, InteligênciaMagod6InteligênciaInteligência, SabedoriaMonged8Destreza, SabedoriaForça, DestrezaPaladinod10Força, CarismaSabedoria, CarismaPatrulheirod10Destreza, SabedoriaForça, DestrezaA seguir, apresentam-se os dados estruturados para cada classe.BárbaroJSON{
+```
+
+**Raças Expandidas**
+
+Opções de suplementos oficiais como *Volo's Guide to Monsters* e *Mordenkainen's Tome of Foes*.
+
+* **Aasimar:** Com as sub-raças Caído, Protetor e Flagelo.
+* **Firbolg:** Gigantes gentis com magia druídica inata.
+* **Goliath:** Humanoides montanheses fortes e competitivos.
+* **Kenku:** Povo-pássaro amaldiçoado sem voz própria, que se comunica através da mímica.
+* **Lizardfolk:** Répteis pragmáticos e sobreviventes dos pântanos.
+* **Tabaxi:** Humanoides felinos curiosos e ágeis.
+* **Tritão:** Guardiões dos oceanos profundos.
+* **Yuan-ti Pureblood:** Humanoides com sangue de serpente, imunes a veneno e com resistência mágica.
+* **Bugbear, Goblin, Hobgoblin, Kobold, Orc:** Raças tradicionalmente monstruosas, apresentadas como opções jogáveis.
+* **Gith:** Com as sub-raças Githyanki e Githzerai, guerreiros psiónicos do Plano Astral.
+
+**Tabela de Referência Rápida: Modificadores de Atributos**
+
+| Raça | Sub-raça | FOR | DES | CON | INT | SAB | CAR | Flexível/Escolha |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Anão** | - | 0 | 0 | +2 | 0 | 0 | 0 | - |
+| Anão | Anão da Colina | 0 | 0 | +2 | 0 | +1 | 0 | - |
+| Anão | Anão da Montanha | +2 | 0 | +2 | 0 | 0 | 0 | - |
+| **Elfo** | - | 0 | +2 | 0 | 0 | 0 | 0 | - |
+| Elfo | Alto Elfo | 0 | +2 | 0 | +1 | 0 | 0 | - |
+| Elfo | Elfo da Floresta | 0 | +2 | 0 | 0 | +1 | 0 | - |
+| Elfo | Elfo Negro (Drow) | 0 | +2 | 0 | 0 | 0 | +1 | - |
+| **Humano** | Padrão | +1 | +1 | +1 | +1 | +1 | +1 | - |
+| Humano | Variante | - | - | - | - | - | - | +1 em dois atributos |
+| **Meio-Elfo**| - | 0 | 0 | 0 | 0 | 0 | +2 | +1 em dois outros |
+| **Meio-Orc** | - | +2 | 0 | +1 | 0 | 0 | 0 | - |
+| **Tiefling** | - | 0 | 0 | 0 | +1 | 0 | +2 | - |
+
+
+### Seção 1.3: Classes de Personagem e Subclasses
+
+Dados para as 13 classes oficiais de D&D 5e.
+
+**Tabela de Referência Rápida: Mecânicas de Classe**
+
+| Classe | Dado de Vida | Atributo Primário | Proficiências em Testes de Resistência |
+| :--- | :--- | :--- | :--- |
+| Artífice | d8 | Inteligência | Constituição, Inteligência |
+| Bárbaro | d12 | Força | Força, Constituição |
+| Bardo | d8 | Carisma | Destreza, Carisma |
+| Bruxo | d8 | Carisma | Sabedoria, Carisma |
+| Clérigo | d8 | Sabedoria | Sabedoria, Carisma |
+| Druida | d8 | Sabedoria | Inteligência, Sabedoria |
+| Feiticeiro | d6 | Carisma | Constituição, Carisma |
+| Guerreiro | d10 | Força ou Destreza | Força, Constituição |
+| Ladino | d8 | Destreza | Destreza, Inteligência |
+| Mago | d6 | Inteligência | Inteligência, Sabedoria |
+| Monge | d8 | Destreza, Sabedoria | Força, Destreza |
+| Paladino | d10 | Força, Carisma | Sabedoria, Carisma |
+| Patrulheiro | d10 | Destreza, Sabedoria | Força, Destreza |
+
+**Dados Estruturados de Classe (Exemplo)**
+```json
+{
   "name": "Bárbaro",
   "description": "Um guerreiro feroz de fúria primal. Para cada Bárbaro, a fúria é um poder que alimenta não apenas a sua proeza em batalha, mas também reflexos, resiliência e feitos de força sobre-humanos.",
   "hit_die": "d12",
@@ -124,29 +250,38 @@ Raças ExpandidasAlém das raças do livro base, o universo de D&D 5e inclui uma
   "proficiencies": {
     "armor": ["Armaduras leves", "Armaduras médias", "Escudos"],
     "weapons": ["Armas simples", "Armas marciais"],
-    "tools":,
+    "tools": [],
     "skills": {
       "choose": 2,
-      "from":
+      "from": ["Adestrar Animais", "Atletismo", "Intimidação", "Natureza", "Percepção", "Sobrevivência"]
     }
   },
   "starting_equipment": "Você começa com o seguinte equipamento: (a) um machado grande ou (b) qualquer arma marcial corpo a corpo; (a) duas machadinhas ou (b) qualquer arma simples; Um pacote de explorador e quatro azagaias.",
-  "class_features":,
+  "class_features": [],
   "subclass_archetype_name": "Caminho Primal",
   "subclass_level": 3,
-  "subclasses":
+  "subclasses": [
+    {
+      "name": "Caminho do Berserker",
+      "description": "Para alguns bárbaros, a fúria é um meio para um fim – esse fim sendo a violência. O Caminho do Berserker é um caminho de fúria descontrolada, encharcado de sangue.",
+      "subclass_features": []
     },
     {
       "name": "Caminho do Guerreiro Totêmico",
       "description": "O Caminho do Guerreiro Totêmico é uma jornada espiritual, à medida que o bárbaro aceita um espírito animal como guia, protetor e inspiração.",
-      "subclass_features":
-        }
-      ]
+      "subclass_features": []
     }
   ]
 }
-Seção 1.4: Armas, Armaduras e EquipamentosEsta seção fornece os dados estruturados para todos os equipamentos padrão do jogador, compilados a partir de fontes de regras de referência.9ArmasJSON
-  },
+```
+
+### Seção 1.4: Armas, Armaduras e Equipamentos
+
+Dados para equipamentos padrão.
+
+**Armas**
+```json
+[
   {
     "name": "Adaga",
     "cost": "2 po",
@@ -172,7 +307,7 @@ Seção 1.4: Armas, Armaduras e EquipamentosEsta seção fornece os dados estrut
     "damage_type": "perfurante",
     "weight": "1 kg",
     "category": "Arma Marcial à Distância",
-    "properties":
+    "properties": ["Munição (alcance 45/180 m)", "Pesada", "Duas Mãos"]
   },
   {
     "name": "Rede",
@@ -184,7 +319,11 @@ Seção 1.4: Armas, Armaduras e EquipamentosEsta seção fornece os dados estrut
     "properties": ["Especial", "Arremesso (alcance 1.5/4.5 m)"]
   }
 ]
-A propriedade "Especial" em certas armas, como a Rede ou a Lança de Justa, indica regras únicas que não se enquadram nas categorias padrão.9 Para uma implementação eficaz, o objeto JSON para tal arma deve incluir uma descrição detalhada dessas regras especiais. A aplicação deve ser programada para detetar a propriedade "Especial" e exibir a descrição correspondente ao utilizador, informando-o sobre a mecânica única da arma.Equipamentos de AventuraJSON[
+```
+
+**Equipamentos de Aventura**
+```json
+[
   {
     "name": "Ábaco",
     "category": "Equipamento de Aventura",
@@ -198,26 +337,29 @@ A propriedade "Especial" em certas armas, como a Rede ou a Lança de Justa, indi
     "weight": "0.5 kg"
   },
   {
-    "name": "Fogo de Alquimista (frasco)",
-    "category": "Equipamento de Aventura",
-    "cost": "50 po",
-    "weight": "0.5 kg"
-  },
-  {
-    "name": "Antídoto (frasco)",
-    "category": "Equipamento de Aventura",
-    "cost": "50 po",
-    "weight": "-"
-  },
-  {
     "name": "Mochila",
     "category": "Equipamento de Aventura",
     "cost": "2 po",
     "weight": "2.5 kg"
   }
 ]
-Parte II: Compêndio de Dados de Tormenta 20Esta parte aborda os requisitos de dados para o sistema Tormenta 20. Devido à natureza fragmentada das fontes de pesquisa disponíveis, esta seção compilará todos os dados acessíveis, ao mesmo tempo que indicará explicitamente onde as informações estão incompletas e requerem consulta aos manuais de regras oficiais.Seção 2.1: Arquitetura de Dados para Tormenta 20Esta seção define um esquema JSON adaptado às mecânicas únicas de Tormenta 20, como o seu sistema de atributos e o sistema flexível de "Poderes".Esquema de racesSemelhante a D&D 5e, mas com uma estrutura de atributos diferente para acomodar bónus e penalidades.12JSON{
+```
+
+---
+
+## Parte II: Compêndio de Dados de Tormenta 20
+
+Esta parte aborda os requisitos de dados para o sistema Tormenta 20. Onde as informações são incompletas, será indicado a necessidade de consulta aos manuais oficiais.
+
+### Seção 2.1: Arquitetura de Dados para Tormenta 20
+
+Esquema JSON adaptado às mecânicas únicas de Tormenta 20.
+
+**Esquema de `races`**
+```json
+{
   "name": "String",
+  "description": "String",
   "attribute_modifiers": {
     "Força": "Integer",
     "Destreza": "Integer",
@@ -226,26 +368,40 @@ Parte II: Compêndio de Dados de Tormenta 20Esta parte aborda os requisitos de d
     "Sabedoria": "Integer",
     "Carisma": "Integer"
   },
-  "abilities":
+  "abilities": ["Object"]
 }
-Esquema de classesEsta estrutura difere significativamente de D&D 5e para refletir a progressão e personalização de Tormenta 20.JSON{
+```
+
+**Esquema de `classes`**
+
+* **Nota de Design (Modelo de "Biblioteca"):** Tormenta 20 emprega um modelo de "biblioteca", onde o jogador escolhe um "Poder" de uma vasta lista a cada nível. O esquema JSON deve conter um array de todos os `class_powers` possíveis, com pré-requisitos, para que a aplicação possa filtrar e apresentar as opções válidas ao jogador.
+
+```json
+{
   "name": "String",
+  "description": "String",
   "pv_initial": "Integer",
   "pv_per_level": "Integer",
   "pm_per_level": "Integer",
   "pericias": {
-    "initial":,
+    "initial": ["String"],
     "choose": "Integer",
-    "from":
+    "from": ["String"]
   },
-  "proficiencies":,
-  "class_abilities":,
-  "class_powers":
+  "proficiencies": ["String"],
+  "class_abilities": ["Object"],
+  "class_powers": ["Object"]
 }
-A distinção fundamental entre os sistemas de progressão de D&D 5e e Tormenta 20 exige arquiteturas de dados diferentes. D&D 5e utiliza um modelo de "roteiro", onde uma classe ganha características predefinidas em níveis específicos. Em contraste, Tormenta 20 emprega um modelo de "biblioteca", onde, a cada nível, o jogador escolhe um "Poder" de uma vasta lista de opções disponíveis para a sua classe.14 Consequentemente, o esquema JSON para uma classe de Tormenta 20 deve conter um array abrangente de todos os class_powers possíveis, incluindo os seus pré-requisitos. A lógica da aplicação será responsável por filtrar esta lista mestra para apresentar ao utilizador apenas as opções válidas no momento da subida de nível, com base no nível atual, atributos e poderes já selecionados do personagem.Seção 2.2: Raças JogáveisEsta seção apresenta os dados compilados para as raças de Tormenta 20 com base nas fontes disponíveis.12JSON
-  },
+```
+
+### Seção 2.2: Raças Jogáveis (Tormenta 20)
+Dados compilados para as raças de Tormenta 20.
+
+```json
+[
   {
     "name": "Humano",
+    "description": "Versáteis e adaptáveis, os humanos são a raça mais numerosa em Arton.",
     "attribute_modifiers": {
       "Força": 2,
       "Destreza": 2,
@@ -260,6 +416,110 @@ A distinção fundamental entre os sistemas de progressão de D&D 5e e Tormenta 
         "description": "Você se torna treinado em duas perícias a sua escolha. Você pode trocar uma dessas perícias por um poder geral a sua escolha."
       }
     ]
+  },
+  {
+    "name": "Anão",
+    "description": "Mestres da forja e da cerveja, os anões são um povo robusto e honrado das montanhas.",
+    "attribute_modifiers": {
+      "Força": 0,
+      "Destreza": -2,
+      "Constituição": 4,
+      "Inteligência": 0,
+      "Sabedoria": 2,
+      "Carisma": 0
+    },
+    "abilities": [
+      {
+        "name": "Conhecimento das Rochas",
+        "description": "Você recebe proficiência em Percepção e Sobrevivência para atividades subterrâneas."
+      }
+    ]
   }
 ]
-Seção 2.3: Classes de PersonagemEsta seção fornece dados estruturados para as classes de Tormenta 20 mencionadas nas fontes.15 A informação disponível é menos sistemática do que a de D&D 5e, focando-se mais em papéis e habilidades chave do que numa progressão detalhada.Lista de Classes: Arcanista, Bárbaro, Bardo, Bucaneiro, Caçador, Cavaleiro, Clérigo, Druida, Guerreiro, Inventor, Ladino, Lutador, Nobre, Paladino.15População de Dados: Cada entrada de classe será populada com os seus PV, PM, Perícias e uma lista de "Poderes" conhecidos. Esta lista será inerentemente incompleta e deve ser tratada como um modelo estrutural.Seção 2.4: Armas e EquipamentosEsta seção compila os dados limitados disponíveis sobre equipamentos de Tormenta 20.Fontes de Dados: As informações são extraídas de menções a itens específicos ou a manuais como Ameaças de Arton.18Conteúdo: Será fornecida uma lista parcial de armas (por exemplo, Açoite Finntroll, Arcabuz, Arpão 18) e equipamento de aventura geral (Mochila, Saco de Dormir 20).Aviso: Esta seção enfatizará que a lista fornecida não é exaustiva e serve como um exemplo estrutural. O desenvolvedor é fortemente aconselhado a adquirir os manuais de regras oficiais de Tormenta 20 para uma lista completa de equipamentos.Parte III: Análise de Implementação e Recomendações EstratégicasEsta parte final transita da provisão de dados para a consultoria especializada, oferecendo orientação sobre a utilização do conjunto de dados e a compreensão das filosofias de design dos dois sistemas.Seção 3.1: Orientação para Integração da AplicaçãoEsta seção fornece conselhos técnicos para o desenvolvedor web sobre como utilizar da melhor forma os dados JSON fornecidos.Análise de Dados Hierárquicos: Um guia sobre como lidar com os dados aninhados de subraces e subclasses em D&D 5e, incluindo exemplos de pseudocódigo para combinar características de pais e filhos.Gestão da Escolha do Jogador: Recomendações para construir componentes de UI que lidem com características baseadas em escolhas, como os Estilos de Luta do Guerreiro ou o sistema de "Poderes" de Tormenta 20. Isto incluirá a lógica para filtrar opções válidas com base em pré-requisitos.Cálculo de Estatísticas Derivadas: Orientação sobre o uso dos dados base para calcular estatísticas de personagem em tempo de execução, como a Classe de Armadura (por exemplo, Defesa sem Armadura do Monge: 10+modificador de DES+modificador de SAB), modificadores de perícia (incluindo Especialização) e bónus de ataque/dano.Lidar com Discrepâncias de Dados: Uma estratégia para gerir os dados incompletos de Tormenta 20, como exibir mensagens de "manual oficial necessário" para descrições em falta ou implementar uma funcionalidade para os utilizadores inserirem manualmente dados dos seus próprios livros.Seção 3.2: Perspetivas Sistémicas e Caminhos de ExpansãoEsta seção oferece uma análise de alto nível dos dois sistemas de jogo, fornecendo contexto que pode informar o desenvolvimento futuro da aplicação.O design de D&D 5e está fortemente centrado no "subclasse" ou "arquétipo" escolhido no início da carreira de um personagem. Esta escolha define um caminho com um conjunto de características predeterminadas em níveis específicos. Tormenta 20, em contraste, oferece um vasto leque de "Poderes" em quase todos os níveis, permitindo uma construção de personagem mais granular e personalizável.14 Um Guerreiro Mestre de Batalha de D&D 5e é fundamentalmente diferente de um Campeão, e os seus caminhos de progressão são fixos. Um Guerreiro de Tormenta 20 pode ser construído de inúmeras maneiras, selecionando diferentes "Poderes" a cada nível. Esta diferença de design fundamental deve refletir-se na aplicação: o construtor de personagens de D&D 5e pode ser um "assistente" mais guiado e linear, enquanto o construtor de Tormenta 20 precisa de ser uma interface de "biblioteca" mais aberta, que capacita os utilizadores a navegar e selecionar a partir de uma grande lista de opções a cada nível.Roteiro para Expansão FuturaMagias: O próximo passo lógico é a inclusão de dados de magias. Propõe-se um esquema para spells (incluindo nível, escola, tempo de conjuração, alcance, componentes, duração, descrição) e discute-se a lógica para ligar listas de magias a classes.Itens Mágicos: Esboça-se um esquema para itens mágicos, incluindo raridade, requisitos de sintonização e descrição das propriedades mágicas.Bestiário: Sugere-se um módulo futuro para estatísticas de monstros, essencial para qualquer funcionalidade integrada de construção de encontros ou ecrã digital do Mestre de Jogo.
+```
+
+### Seção 2.3: Classes de Personagem (Tormenta 20)
+
+Lista de classes de Tormenta 20. A população de dados para cada classe focará em PV, PM, Perícias e uma lista de "Poderes" conhecidos.
+
+* Arcanista
+* Bárbaro
+* Bardo
+* Bucaneiro
+* Caçador
+* Cavaleiro
+* Clérigo
+* Druida
+* Guerreiro
+* Inventor
+* Ladino
+* Lutador
+* Nobre
+* Paladino
+
+### Seção 2.4: Armas e Equipamentos (Tormenta 20)
+
+Dados limitados sobre equipamentos de Tormenta 20, extraídos de fontes como *Ameaças de Arton*.
+**Aviso:** A lista não é exaustiva. Recomenda-se a aquisição dos manuais de regras oficiais para uma lista completa.
+
+---
+
+## Parte III: Análise de Implementação e Recomendações
+
+### Seção 3.1: Orientação para Integração da Aplicação
+
+* **Análise de Dados Hierárquicos:** Lide com os dados aninhados de `subraces` e `subclasses` em D&D 5e combinando as características do objeto pai (raça/classe) com as do objeto filho selecionado (sub-raça/subclasse).
+* **Gestão da Escolha do Jogador:** Construa componentes de UI que filtrem opções válidas com base em pré-requisitos, especialmente para o sistema de "Poderes" de Tormenta 20.
+* **Lidar com Discrepâncias de Dados:** Para os dados incompletos de Tormenta 20, exiba mensagens de "manual oficial necessário" ou implemente uma funcionalidade para os utilizadores inserirem dados manualmente.
+
+### Seção 3.2: Perspectivas Sistémicas e Caminhos de Expansão
+
+* **Filosofia de Design:** O design de D&D 5e é centrado em "subclasses" com caminhos de progressão fixos. Tormenta 20 foca em "Poderes", permitindo uma personalização mais granular. A UI deve refletir isso: um "assistente" guiado para D&D 5e e uma "biblioteca" de opções para Tormenta 20.
+* **Roteiro para Expansão Futura:** Os próximos passos lógicos incluem a adição de compêndios para **Magias**, **Itens Mágicos** e um **Bestiário** de monstros.
+
+## Parte IV: Sistema Unificado (Híbrido)
+
+Esta parte detalha a lógica e a arquitetura de dados para um sistema unificado (ou "híbrido"), que aproveita os melhores elementos de Dungeons & Dragons 5th Edition e Tormenta 20. O objetivo é criar uma base de regras coesa que permita aos jogadores misturar e combinar raças e classes de ambos os universos de forma equilibrada.
+
+### Seção 4.1: Filosofia de Design e Regras Fundamentais
+
+O sistema unificado opera sobre um conjunto de regras fundamentais que servem como uma "camada de compatibilidade" entre as mecânicas distintas de D&D 5e e T20.
+
+1.  **Estrutura de Atributos Unificada:** O sistema adota o modelo de seis atributos (Força, Destreza, Constituição, Inteligência, Sabedoria, Carisma). Todos os bônus e penalidades, seja de D&D 5e (`ability_score_increase`) ou T20 (`attribute_modifiers`), são convertidos para um modificador numérico único (ex: +2, -1). Isso simplifica os cálculos e garante paridade entre as raças.
+
+2.  **Sistema de Progressão Híbrido:** Para unificar o modelo de "roteiro" (D&D 5e) com o de "biblioteca" (T20), a progressão de classe será híbrida:
+    * **Habilidades de Classe Fixas:** Personagens recebem habilidades chave em níveis específicos, definidas pela sua classe, de forma similar aos arquétipos de D&D 5e.
+    * **Sistema de Poderes:** Em níveis intermediários ou como parte de escolhas, os jogadores ganham acesso a uma lista de "Poderes". Esses poderes podem ser genéricos (disponíveis para todos) ou específicos da classe, permitindo a personalização granular característica de Tormenta 20.
+
+3.  **Recursos (PV e PM):** O sistema adota o modelo de Pontos de Vida (PV) e Pontos de Mana (PM) de Tormenta 20 como padrão para todos os personagens.
+    * **Pontos de Vida (PV):** Classes de D&D 5e terão seu "Dado de Vida" convertido para um valor fixo de "PV por Nível" (ex: um d12 se torna `+7 PV por nível`, um d8 se torna `+5 PV por nível`).
+    * **Pontos de Mana (PM):** Classes conjuradoras de D&D 5e (Mago, Clérigo) receberão um valor de "PM por Nível" para alimentar suas magias, em vez do sistema de "espaços de magia". Classes não-mágicas terão 0 PM por nível, a menos que selecionem poderes que concedam PM.
+
+### Seção 4.2: Arquitetura de Dados para o Sistema Unificado
+
+Para suportar esta lógica, são necessários esquemas JSON adaptados para o sistema híbrido.
+
+**Esquema de `unified_race`**
+
+Este esquema combina os elementos de ambos os sistemas, adicionando um campo `source_system` para rastreabilidade.
+
+```json
+{
+  "name": "String",
+  "description": "String",
+  "source_system": "String (dnd5e | tormenta20 | unified)",
+  "attribute_modifiers": {
+    "Força": "Integer",
+    "Destreza": "Integer",
+    "Constituição": "Integer",
+    "Inteligência": "Integer",
+    "Sabedoria": "Integer",
+    "Carisma": "Integer"
+  },
+  "abilities": [
+    {
+      "name": "String",
+      "description": "String"
+    }
+  ]
+}

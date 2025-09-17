@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.db import models # Adicionado
 from campanhas.models import Campanha
 from .models import Personagem
 from sistema_unificado.models import SistemaJogo, ConteudoSistema
@@ -109,12 +110,21 @@ class PersonagemForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Filtrar campanhas para mostrar apenas as do usuário
+        # Filtrar campanhas para mostrar apenas as do usuário OU campanhas públicas
         if user:
-            self.fields['campanha'].queryset = Campanha.objects.filter(organizador=user)
+            queryset_campanhas = Campanha.objects.filter(
+                models.Q(organizador=user) | 
+                models.Q(publica=True) | 
+                models.Q(participacoes__usuario=user, participacoes__ativo=True)
+            ).distinct().order_by('nome')
+            self.fields['campanha'].queryset = queryset_campanhas
+            print(f"DEBUG: PersonagemForm - Queryset de Campanhas: {queryset_campanhas}") # Adicionado para depuração
         else:
-            self.fields['campanha'].queryset = Campanha.objects.none()
+            self.fields['campanha'].queryset = Campanha.objects.filter(publica=True).order_by('nome')
         
+        # Popular o queryset para sistema_jogo
+        self.fields['sistema_jogo'].queryset = SistemaJogo.objects.all().order_by('nome')
+
         # Configurar campos como opcionais se necessário
         self.fields['historia'].required = False
         self.fields['personalidade'].required = False

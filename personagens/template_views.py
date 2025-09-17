@@ -5,8 +5,9 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.db.models import Q # Adicionado
 
-from campanhas.models import Campanha
+from campanhas.models import Campanha, ParticipacaoCampanha # Adicionado ParticipacaoCampanha
 from .models import Personagem
 from sistema_unificado.models import SistemaJogo, ConteudoSistema
 from .forms import PersonagemForm
@@ -30,15 +31,19 @@ def listar_personagens(request):
 def criar_personagem(request):
     """Criar personagem usando formulário simples."""
     if request.method == 'POST':
-        form = PersonagemForm(request.POST, request.FILES)
+        form = PersonagemForm(request.POST, request.FILES, user=request.user) # Passar o user aqui também
+        print(f"DEBUG: criar_personagem - request.POST: {request.POST}") # Adicionado para depuração
         if form.is_valid():
+            print(f"DEBUG: criar_personagem - Formulário é válido.") # Adicionado para depuração
             personagem = form.save(commit=False)
             personagem.usuario = request.user
             personagem.save()
             messages.success(request, f'Personagem "{personagem.nome}" criado com sucesso!')
-            return redirect('personagens:detalhe', pk=personagem.pk)
+            return redirect('personagens:listar')
+        else:
+            print(f"DEBUG: criar_personagem - Erros do Formulário: {form.errors}") # Adicionado para depuração
     else:
-        form = PersonagemForm()
+        form = PersonagemForm(user=request.user)
     
     context = {
         'form': form,
@@ -54,11 +59,18 @@ def criar_personagem_avancado(request):
         return processar_personagem_avancado(request)
     
     # Carregar dados necessários para o template
-    campanhas = Campanha.objects.filter(organizador=request.user).order_by('nome')
+    campanhas_organizadas = Campanha.objects.filter(organizador=request.user)
+    campanhas_publicas = Campanha.objects.filter(publica=True)
+    campanhas_participadas = Campanha.objects.filter(participacoes__usuario=request.user, participacoes__ativo=True)
+
+    # Combinar e remover duplicatas
+    campanhas_disponiveis = (campanhas_organizadas | campanhas_publicas | campanhas_participadas).distinct().order_by('nome')
+    print(f"DEBUG: criar_personagem_avancado - Campanhas Disponíveis: {campanhas_disponiveis}") # Adicionado para depuração
+
     sistemas = SistemaJogo.objects.all().order_by('nome')
     
     context = {
-        'campanhas': campanhas,
+        'campanhas': campanhas_disponiveis, # Alterado para campanhas_disponiveis
         'sistemas': sistemas,
         'title': 'Construtor de Personagem Avançado'
     }
@@ -71,6 +83,7 @@ def processar_personagem_avancado(request):
         # Extrair dados do formulário
         nome = request.POST.get('nome', '').strip()
         campanha_id = request.POST.get('campanha')
+        print(f"DEBUG: processar_personagem_avancado - Campanha ID recebido: {campanha_id}") # Adicionado para depuração
         sistema_slug = request.POST.get('sistema', '')
         raca_id = request.POST.get('raca')
         classe_id = request.POST.get('classe')
@@ -96,7 +109,17 @@ def processar_personagem_avancado(request):
             return redirect('personagens:criar_avancado')
             
         # Buscar objetos do banco de dados
-        campanha = get_object_or_404(Campanha, id=campanha_id, organizador=request.user)
+        # Primeiro, tenta buscar a campanha pelo ID
+        campanha = get_object_or_404(Campanha, id=campanha_id)
+        print(f"DEBUG: processar_personagem_avancado - Campanha encontrada: {campanha}") # Adicionado para depuração
+        
+        # Depois, verifica se o usuário tem permissão para usar esta campanha
+        # (organizador, pública ou participante ativo)
+        if not (campanha.organizador == request.user or 
+                campanha.publica or 
+                campanha.participacoes.filter(usuario=request.user, ativo=True).exists()):
+            messages.error(request, 'Você não tem permissão para criar um personagem nesta campanha.')
+            return redirect('personagens:criar_avancado')
         
         # Mapear sistema
         sistema_map = {
@@ -181,7 +204,7 @@ def detalhe_personagem(request, pk):
     """Exibe detalhes completos de um personagem."""
     personagem = get_object_or_404(
         Personagem.objects.select_related(
-            'usuario', 'campanha', 'sistema', 'raca', 'classe'
+            'usuario', 'campanha', 'sistema_jogo'
         ),
         pk=pk,
         usuario=request.user
@@ -212,7 +235,7 @@ def calcular_pv_maximo(personagem):
     """Calcula pontos de vida máximos baseado na classe e constituição."""
     pv_base = 10  # Valor padrão
     
-    if personagem.classe:
+    if personagem.classe_principal:
         # Mapear classes para PV base (implementar lógica específica do sistema)
         pv_map = {
             'Guerreiro': 10,
@@ -228,7 +251,7 @@ def calcular_pv_maximo(personagem):
             'Monge': 8,
             'Bardo': 8,
         }
-        pv_base = pv_map.get(personagem.classe.nome, 8)
+        pv_base = pv_map.get(personagem.classe_principal.get('nome'), 8)
     
     # Adicionar modificador de constituição
     mod_con = (personagem.constituicao - 10) // 2

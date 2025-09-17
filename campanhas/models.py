@@ -140,6 +140,12 @@ class Campanha(models.Model):
         default=dict,
         help_text=_("Regras da casa e configurações especiais")
     )
+
+    publica = models.BooleanField(
+        _("Pública"),
+        default=False,
+        help_text=_("Indica se a campanha é pública e visível para todos os usuários.")
+    )
     
     class Meta:
         verbose_name = _("Campanha")

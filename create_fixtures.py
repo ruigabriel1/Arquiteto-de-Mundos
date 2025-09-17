@@ -309,6 +309,7 @@ def criar_campanhas_teste(sistemas):
                 'nivel_maximo': camp_data['nivel_maximo'],
                 'estado': 'planejamento',
                 'ia_ativa': True,
+                'publica': True,  # Adicionado para tornar a campanha pública
                 'configuracoes_ia': camp_data['configuracoes_ia'],
                 'personalidade_gm': {
                     'humor': camp_data['configuracoes_ia'].get('personalidade', 'neutro'),
