@@ -266,13 +266,13 @@ def editar_personagem(request, pk):
     personagem = get_object_or_404(Personagem, pk=pk, usuario=request.user)
     
     if request.method == 'POST':
-        form = PersonagemForm(request.POST, request.FILES, instance=personagem)
+        form = PersonagemForm(request.POST, request.FILES, instance=personagem, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, f'Personagem "{personagem.nome}" atualizado com sucesso!')
-            return redirect('personagens:detalhe', pk=personagem.pk)
+            return redirect('personagens:listar')
     else:
-        form = PersonagemForm(instance=personagem)
+        form = PersonagemForm(instance=personagem, user=request.user)
     
     context = {
         'form': form,

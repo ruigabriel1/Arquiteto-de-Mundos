@@ -109,19 +109,23 @@ class PersonagemForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
-        # Filtrar campanhas para mostrar apenas as do usuário OU campanhas públicas
-        if user:
-            queryset_campanhas = Campanha.objects.filter(
-                models.Q(organizador=user) | 
-                models.Q(publica=True) | 
-                models.Q(participacoes__usuario=user, participacoes__ativo=True)
-            ).distinct().order_by('nome')
-            self.fields['campanha'].queryset = queryset_campanhas
-            print(f"DEBUG: PersonagemForm - Queryset de Campanhas: {queryset_campanhas}") # Adicionado para depuração
+
+        if self.instance and self.instance.pk:
+            # Modo de edição: desabilitar o campo de campanha
+            self.fields['campanha'].disabled = True
         else:
-            self.fields['campanha'].queryset = Campanha.objects.filter(publica=True).order_by('nome')
-        
+            # Modo de criação: filtrar campanhas
+            if user:
+                queryset_campanhas = Campanha.objects.filter(
+                    models.Q(organizador=user) |
+                    models.Q(publica=True) |
+                    models.Q(participacoes__usuario=user, participacoes__ativo=True)
+                ).distinct().order_by('nome')
+                self.fields['campanha'].queryset = queryset_campanhas
+            else:
+                # Fallback se o usuário não for fornecido na criação
+                self.fields['campanha'].queryset = Campanha.objects.filter(publica=True).order_by('nome')
+
         # Popular o queryset para sistema_jogo
         self.fields['sistema_jogo'].queryset = SistemaJogo.objects.all().order_by('nome')
 
