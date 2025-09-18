@@ -227,6 +227,10 @@ LOCAL_AI_URL = config('LOCAL_AI_URL', default='')
 LOCAL_AI_MODELO = config('LOCAL_AI_MODELO', default='llama2')
 LOCAL_AI_API_KEY = config('LOCAL_AI_API_KEY', default='')
 
+# Google Gemini API Configuration
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+GEMINI_MODELO = config('GEMINI_MODELO', default='gemini-pro')
+
 # Configurações de IA GM
 IA_GM_CACHE_TIMEOUT = config('IA_GM_CACHE_TIMEOUT', default=3600, cast=int)  # 1 hora
 IA_GM_MAX_TOKENS = config('IA_GM_MAX_TOKENS', default=2000, cast=int)

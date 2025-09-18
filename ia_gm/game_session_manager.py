@@ -301,64 +301,38 @@ class GameSessionManager:
     def _gerar_situacao_inteligente(self, personagens_str: str, nome_campanha: str, 
                                     descricao_campanha: str, nome_sessao: str, 
                                     descricao_sessao: str, tem_historico: bool) -> str:
-        """Gera situação inicial inteligente sem IA externa - OTIMIZADA"""
+        """Gera situação inicial concreta e direta, sem meta-linguagem - OTIMIZADA"""
         import random
         
-        # Lista de aberturas envolventes baseadas no estilo da sessão
-        aberturas = [
-            f"🏰 **Bem-vindos à {nome_sessao}!**\n\nHeróis de **{nome_campanha}**, uma nova aventura os aguarda...",
-            f"⚙️ **{nome_sessao}** - Capítulo {'Novo' if not tem_historico else 'Seguinte'} em **{nome_campanha}**\n\nBravos aventureiros, o destino os convoca...",
-            f"🎆 A história de **{nome_campanha}** continua em **{nome_sessao}**\n\n{personagens_str}, vossa jornada épica prossegue..."
-        ]
-        
-        # Ganchos narrativos variados
+        # Ganchos narrativos concretos e diretos
         ganchos = [
-            "Uma estranha névoa dourada se dissipa à vossa frente, revelando um caminho antes oculto.",
-            "O som de cascos se aproxima pela estrada empoeirada - alguém vem em vossa direção.",
-            "Uma carta lacrada com selo real chegou durante a madrugada. O conteúdo pode mudar tudo.",
-            "Rumores de uma descoberta antiga ecoam pela taverna onde descansais.",
-            "O céu se escurece repentinamente, e uma sombra gigantesca cruza sobre vossas cabeças.",
-            "Uma música melancólica ecoa das profundezas da floresta próxima."
+            "Uma estranha névoa dourada dissipa-se à vossa frente, revelando um beco que não estava lá antes.",
+            "O som de cascos de cavalo aproxima-se rapidamente pela estrada empoeirada.",
+            "Um mensageiro ofegante entrega-vos uma carta lacrada com o selo real.",
+            "Dentro da taverna, vocês ouvem um boato sobre uma ruína recém-descoberta na floresta próxima.",
+            "O céu escurece subitamente, e uma sombra gigantesca passa por cima de vocês, bloqueando o sol por um instante.",
+            "Uma música melancólica, tocada numa flauta, ecoa das profundezas da floresta."
         ]
         
-        # Elementos ambientais imersivos
+        # Elementos ambientais imersivos usando os 5 sentidos
         ambientes = [
-            "O ar carrega o aroma de chuva recente misturado com especiarias exóticas.",
-            "Uma brisa gelada faz as folhas sussurrarem segredos ancestrais.",
-            "O sol poente pinta o horizonte com tons dourados e carmesim.",
-            "Tochas crepitam nas paredes, criando sombras dançantes ao vosso redor.",
-            "O som distante de água corrente promete descanso e renovação."
+            "O ar carrega o cheiro de chuva recente e especiarias vindas de um mercado próximo.",
+            "Uma brisa gelada percorre a rua, fazendo as folhas secas dançarem no chão.",
+            "O sol poente pinta as nuvens com tons de laranja e roxo.",
+            "As tochas nas paredes crepitam, lançando sombras dançantes nas paredes de pedra.",
+            "Vocês ouvem o som distante de um rio a correr, prometendo água fresca."
         ]
         
         # Seleciona elementos aleatórios para variedade
-        abertura = random.choice(aberturas)
         gancho = random.choice(ganchos)
         ambiente = random.choice(ambientes)
         
-        # Incorpora descrição da sessão se disponível
-        contexto_sessao = ""
-        if descricao_sessao:
-            contexto_sessao = f"\n\n📜 **Contexto da Sessão:**\n{descricao_sessao}\n"
-        
-        # Adiciona contexto da campanha se disponível
-        contexto_campanha = ""
-        if descricao_campanha and len(descricao_campanha) > 20:
-            contexto_reducido = descricao_campanha[:150] + "..." if len(descricao_campanha) > 150 else descricao_campanha
-            contexto_campanha = f"\n🌍 **Mundo de {nome_campanha}:**\n{contexto_reducido}\n"
-        
-        # Constrói a situação final
-        situacao = f"""{abertura}
-{contexto_campanha}{contexto_sessao}
-🎭 **A Aventura Começa:**
-**{personagens_str}**, vocês se encontram em um momento decisivo. {ambiente}
+        # Constrói a situação final de forma direta
+        situacao = f"""**{personagens_str}**, vocês estão juntos quando percebem algo: {ambiente}
 
-{gancho}
+De repente, {gancho}
 
-Um momento de expectativa paira no ar. As possibilidades se estendem diante de vocês como caminhos em uma encruzilhada do destino.
-
-{'🎯 **Continuando vossa jornada épica...**' if tem_historico else '✨ **Iniciando vossa lenda...**'}
-
-**O que vocês fazem?**"""
+O que vocês fazem?"""
         
         return situacao
     
@@ -424,36 +398,33 @@ O que vocês fazem?"""
         return narrativa
     
     def _gerar_narrativa_inteligente(self, estado_turno: EstadoTurno, acoes_detalhadas: list, situacao_anterior: str) -> str:
-        """Gera narrativa de consequências inteligente sem IA externa - OTIMIZADA"""
+        """Gera narrativa de consequências concreta e direta, sem meta-linguagem - OTIMIZADA"""
         import random
         
-        # Templates de transição narrativa
+        # Transições que focam na ação imediata
         transicoes = [
-            "Com determinação e coragem, os heróis agem:",
-            "O destino responde às escolhas dos aventureiros:",
-            "As ações dos personagens ecoam pelo mundo:",
-            "A aventura se desenrola conforme os heróis decidem:",
-            "O mundo reage às decisões dos protagonistas:"
+            "Enquanto o grupo age, o ambiente ao redor reage.",
+            "As ações coordenadas do grupo causam um efeito imediato.",
+            "O som das vossas ações atrai atenção.",
+            "A poeira assenta e as consequências imediatas se tornam claras.",
         ]
-        
-        # Consequencias narrativas variadas
+
+        # Consequências concretas e sensoriais
         consequencias = [
-            "Os eventos se alinham de forma inesperada, revelando novas possibilidades.",
-            "Uma cadeia de acontecimentos é desencadeada pelas ações tomadas.",
-            "O ambiente ao redor responde de maneira surpreendente às escolhas feitas.",
-            "As consequências das decisões começam a se manifestar no mundo.",
-            "Novos caminhos se abrem enquanto outros se fecham para sempre."
+            "Um barulho alto ecoa à distância, como uma rocha a deslizar.",
+            "O ar fica subitamente mais frio e uma sombra parece mover-se na periferia da vossa visão.",
+            "O NPC que observava vocês agora tem uma expressão de choque e medo.",
+            "Uma porta que antes estava trancada range e abre-se lentamente.",
+            "O chão treme por um breve momento, derrubando alguns objetos de uma prateleira próxima."
         ]
-        
-        # Elementos de continuidade
+
+        # Descrições de continuidade focadas no próximo passo
         continuidades = [
-            "A jornada continua com novas questões surgindo no horizonte.",
-            "Novos desafios e oportunidades aguardam os heróis adiante.",
-            "O próximo capítulo desta épica aventura está prestes a começar.",
-            "A história se aprofunda com cada decisão corajosa tomada.",
-            "O mundo continua a evoluir em resposta às ações heróicas."
+            "Diante deste novo desenvolvimento, um silêncio expectante cai sobre o grupo.",
+            "A cena agora é diferente, e um novo conjunto de escolhas se apresenta.",
+            "O resultado imediato das vossas ações deixa uma pergunta no ar.",
         ]
-        
+
         # Seleciona elementos aleatórios
         transicao = random.choice(transicoes)
         consequencia = random.choice(consequencias)
@@ -462,20 +433,15 @@ O que vocês fazem?"""
         # Constrói a narrativa
         acoes_formatadas = "\n".join([f"  • {acao}" for acao in acoes_detalhadas])
         
-        narrativa = f"""🎭 **Turno {estado_turno.numero_turno} - Resolvendo Ações dos Heróis**
+        narrativa = f"""
+**Turno {estado_turno.numero_turno} - Consequências**
 
 {transicao}
-
 {acoes_formatadas}
 
-⚔️ **Consequências:**
-{consequencia}
+{consequencia} {continuidade}
 
-Com base nas escolhas dos personagens, a situação evolui naturalmente. {continuidade}
-
-✨ As decisões tomadas pelos heróis ecoam pelo tecido da realidade, moldando o destino que os aguarda...
-
-📜 *Preparando nova situação...*"""
+O que vocês fazem?"""
         
         return narrativa
     
@@ -607,14 +573,20 @@ A narrativa se desenvolve naturalmente a partir das decisões tomadas pelos her�
             return self._gerar_situacao_generica_fallback(turno_numero, personagens_str)
     
     def _gerar_situacao_generica_fallback(self, turno_numero: int, personagens_str: str) -> Dict[str, Any]:
-        """Gera situação genérica quando a IA falha"""
-        situacao_generica = f"""🎭 **Turno {turno_numero} - A Aventura Continua**
+        """Gera situação genérica e concreta quando a IA falha"""
+        import random
 
-Com base nas ações anteriores, a situação se desenvolve naturalmente. O mundo de **{self.sessao.campanha.nome}** responde às escolhas dos personagens, revelando novas possibilidades e desafios.
+        ambientes = [
+            "O ar ao redor de vocês fica mais denso e um silêncio repentino toma conta do local.",
+            "Vocês notam um objeto brilhando sutilmente debaixo de uma pilha de escombros.",
+            "Um som de algo pesado a ser arrastado vem do corredor seguinte."
+        ]
 
-O ambiente ao redor dos heróis muda sutilmente, criando oportunidades para exploração, interação e descoberta. Cada decisão tomada ecoa no tecido da realidade, moldando o curso da aventura.
+        situacao_generica = f"""**Turno {turno_numero}**
 
-Com expectativa no ar, é hora de decidir como proceder nesta jornada épica."""
+{random.choice(ambientes)}
+
+O que vocês fazem?"""
         
         return {
             'situacao': situacao_generica,

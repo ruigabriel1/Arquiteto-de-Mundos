@@ -58,6 +58,12 @@ class MasterRulesEngine:
             obrigatoria=True
         ),
         RegraComportamental(
+            nome="NARRACAO_CONCRETA",
+            descricao="Narrar consequências diretas e sensoriais. PROIBIDO usar meta-linguagem como 'o destino aguarda' ou 'a situação evolui'. Foco nos 5 sentidos e em ações concretas.",
+            modo_aplicacao=ModoOperacao.JOGO,
+            obrigatoria=True
+        ),
+        RegraComportamental(
             nome="NPCS_COM_ALMA",
             descricao="NPCs são pessoas, não robôs. Cada um tem personalidade, motivações, falhas e voz única.",
             modo_aplicacao=ModoOperacao.JOGO,

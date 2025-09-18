@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Criar Personagem - Unified Chronicles{% endblock %}
+{% block title %}{% if personagem %}Editar Personagem{% else %}Criar Personagem{% endif %} - Unified Chronicles{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -9,8 +9,8 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="mb-0">
-                        <i class="fas fa-user-plus me-2"></i>
-                        {% if personagem %}Editar Personagem{% else %}Criar Novo Personagem{% endif %}
+                        <i class="fas fa-user-edit me-2"></i>
+                        {% if personagem %}Editar {{ personagem.nome }}{% else %}Criar Novo Personagem{% endif %}
                     </h3>
                 </div>
                 <div class="card-body">
@@ -20,171 +20,143 @@
                         <!-- Informações Básicas -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="text-secondary mb-3">
-                                    <i class="fas fa-id-card me-2"></i>Informações Básicas
-                                </h5>
+                                <h5 class="text-secondary mb-3"><i class="fas fa-id-card me-2"></i>Informações Básicas</h5>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="nome" class="form-label">Nome do Personagem *</label>
-                                <input type="text" class="form-control" id="nome" name="nome" 
-                                       value="{{ personagem.nome|default:'' }}" required>
+                                <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }} *</label>
+                                {{ form.nome }}
+                                {% if form.nome.errors %}<div class="invalid-feedback d-block">{{ form.nome.errors.as_text }}</div>{% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="id_campanha" class="form-label">Campanha *</label>
+                                <label for="{{ form.campanha.id_for_label }}" class="form-label">{{ form.campanha.label }} *</label>
                                 {{ form.campanha }}
-                                {% if form.campanha.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.campanha.errors %}{{ error }}{% endfor %}
-                                    </div>
-                                {% endif %}
+                                {% if form.campanha.errors %}<div class="invalid-feedback d-block">{{ form.campanha.errors.as_text }}</div>{% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="id_sistema_jogo" class="form-label">Sistema de Jogo *</label>
+                                <label for="{{ form.sistema_jogo.id_for_label }}" class="form-label">{{ form.sistema_jogo.label }} *</label>
                                 {{ form.sistema_jogo }}
-                                {% if form.sistema_jogo.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.sistema_jogo.errors %}{{ error }}{% endfor %}
-                                    </div>
-                                {% endif %}
+                                {% if form.sistema_jogo.errors %}<div class="invalid-feedback d-block">{{ form.sistema_jogo.errors.as_text }}</div>{% endif %}
                             </div>
-                        </div>
-
-                        <!-- Sistema de Jogo -->
-                        <div class="row mb-4">
-                            <div class="col-md-4 mb-3">
-                                <label for="raca" class="form-label">Raça</label>
-                                <input type="text" class="form-control" id="raca" name="raca" 
-                                       value="{{ personagem.raca|default:'' }}" placeholder="Ex: Humano, Elfo">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.nivel.id_for_label }}" class="form-label">{{ form.nivel.label }}</label>
+                                {{ form.nivel }}
+                                {% if form.nivel.errors %}<div class="invalid-feedback d-block">{{ form.nivel.errors.as_text }}</div>{% endif %}
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="classe" class="form-label">Classe</label>
-                                <input type="text" class="form-control" id="classe" name="classe" 
-                                       value="{{ personagem.classe|default:'' }}" placeholder="Ex: Guerreiro, Mago">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.raca.id_for_label }}" class="form-label">{{ form.raca.label }}</label>
+                                {{ form.raca }}
+                                {% if form.raca.errors %}<div class="invalid-feedback d-block">{{ form.raca.errors.as_text }}</div>{% endif %}
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="nivel" class="form-label">Nível</label>
-                                <input type="number" class="form-control" id="nivel" name="nivel" 
-                                       value="{{ personagem.nivel|default:1 }}" min="1" max="20">
-                            </div>
-                        </div>
-
-                        <!-- Atributos -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h5 class="text-secondary mb-3">
-                                    <i class="fas fa-chart-bar me-2"></i>Atributos
-                                </h5>
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <label for="forca" class="form-label">Força</label>
-                                <input type="number" class="form-control" id="forca" name="forca" 
-                                       value="{{ personagem.forca|default:10 }}" min="1" max="30">
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <label for="destreza" class="form-label">Destreza</label>
-                                <input type="number" class="form-control" id="destreza" name="destreza" 
-                                       value="{{ personagem.destreza|default:10 }}" min="1" max="30">
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <label for="constituicao" class="form-label">Constituição</label>
-                                <input type="number" class="form-control" id="constituicao" name="constituicao" 
-                                       value="{{ personagem.constituicao|default:10 }}" min="1" max="30">
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <label for="inteligencia" class="form-label">Inteligência</label>
-                                <input type="number" class="form-control" id="inteligencia" name="inteligencia" 
-                                       value="{{ personagem.inteligencia|default:10 }}" min="1" max="30">
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <label for="sabedoria" class="form-label">Sabedoria</label>
-                                <input type="number" class="form-control" id="sabedoria" name="sabedoria" 
-                                       value="{{ personagem.sabedoria|default:10 }}" min="1" max="30">
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <label for="carisma" class="form-label">Carisma</label>
-                                <input type="number" class="form-control" id="carisma" name="carisma" 
-                                       value="{{ personagem.carisma|default:10 }}" min="1" max="30">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.classe.id_for_label }}" class="form-label">{{ form.classe.label }}</label>
+                                {{ form.classe }}
+                                {% if form.classe.errors %}<div class="invalid-feedback d-block">{{ form.classe.errors.as_text }}</div>{% endif %}
                             </div>
                         </div>
 
                         <!-- Características Físicas -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="text-secondary mb-3">
-                                    <i class="fas fa-portrait me-2"></i>Características Físicas
-                                </h5>
+                                <h5 class="text-secondary mb-3"><i class="fas fa-portrait me-2"></i>Características Físicas</h5>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="idade" class="form-label">Idade</label>
-                                <input type="text" class="form-control" id="idade" name="idade" 
-                                       value="{{ personagem.idade|default:'' }}" placeholder="Ex: 25 anos">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.idade.id_for_label }}" class="form-label">{{ form.idade.label }}</label>
+                                {{ form.idade }}
+                                {% if form.idade.errors %}<div class="invalid-feedback d-block">{{ form.idade.errors.as_text }}</div>{% endif %}
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="altura_peso" class="form-label">Altura & Peso</label>
-                                <input type="text" class="form-control" id="altura_peso" name="altura_peso" 
-                                       value="{{ personagem.altura_peso|default:'' }}" placeholder="Ex: 1.75m, 70kg">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.altura.id_for_label }}" class="form-label">{{ form.altura.label }}</label>
+                                {{ form.altura }}
+                                {% if form.altura.errors %}<div class="invalid-feedback d-block">{{ form.altura.errors.as_text }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.peso.id_for_label }}" class="form-label">{{ form.peso.label }}</label>
+                                {{ form.peso }}
+                                {% if form.peso.errors %}<div class="invalid-feedback d-block">{{ form.peso.errors.as_text }}</div>{% endif %}
                             </div>
                             <div class="col-12 mb-3">
-                                <label for="aparencia" class="form-label">Aparência Física</label>
-                                <textarea class="form-control" id="aparencia" name="aparencia" rows="3" 
-                                          placeholder="Descreva a aparência do seu personagem...">{{ personagem.aparencia|default:'' }}</textarea>
+                                <label for="{{ form.aparencia.id_for_label }}" class="form-label">{{ form.aparencia.label }}</label>
+                                {{ form.aparencia }}
+                                {% if form.aparencia.errors %}<div class="invalid-feedback d-block">{{ form.aparencia.errors.as_text }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Atributos -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-secondary mb-3"><i class="fas fa-chart-bar me-2"></i>Atributos</h5>
+                            </div>
+                            <div class="col-md-2 col-4 mb-3">
+                                <label for="{{ form.forca.id_for_label }}" class="form-label">{{ form.forca.label }}</label>
+                                {{ form.forca }}
+                            </div>
+                            <div class="col-md-2 col-4 mb-3">
+                                <label for="{{ form.destreza.id_for_label }}" class="form-label">{{ form.destreza.label }}</label>
+                                {{ form.destreza }}
+                            </div>
+                            <div class="col-md-2 col-4 mb-3">
+                                <label for="{{ form.constituicao.id_for_label }}" class="form-label">{{ form.constituicao.label }}</label>
+                                {{ form.constituicao }}
+                            </div>
+                            <div class="col-md-2 col-4 mb-3">
+                                <label for="{{ form.inteligencia.id_for_label }}" class="form-label">{{ form.inteligencia.label }}</label>
+                                {{ form.inteligencia }}
+                            </div>
+                            <div class="col-md-2 col-4 mb-3">
+                                <label for="{{ form.sabedoria.id_for_label }}" class="form-label">{{ form.sabedoria.label }}</label>
+                                {{ form.sabedoria }}
+                            </div>
+                            <div class="col-md-2 col-4 mb-3">
+                                <label for="{{ form.carisma.id_for_label }}" class="form-label">{{ form.carisma.label }}</label>
+                                {{ form.carisma }}
                             </div>
                         </div>
 
                         <!-- História e Personalidade -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="text-secondary mb-3">
-                                    <i class="fas fa-book-open me-2"></i>História & Personalidade
-                                </h5>
+                                <h5 class="text-secondary mb-3"><i class="fas fa-book-open me-2"></i>História & Personalidade</h5>
                             </div>
                             <div class="col-12 mb-3">
-                                <label for="historia" class="form-label">História de Fundo</label>
-                                <textarea class="form-control" id="historia" name="historia" rows="4" 
-                                          placeholder="Conte a história do seu personagem, sua origem, motivações...">{{ personagem.historia|default:'' }}</textarea>
+                                <label for="{{ form.historia.id_for_label }}" class="form-label">{{ form.historia.label }}</label>
+                                {{ form.historia }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="personalidade" class="form-label">Traços de Personalidade</label>
-                                <textarea class="form-control" id="personalidade" name="personalidade" rows="3" 
-                                          placeholder="Como seu personagem age e se comporta...">{{ personagem.personalidade|default:'' }}</textarea>
+                                <label for="{{ form.personalidade.id_for_label }}" class="form-label">{{ form.personalidade.label }}</label>
+                                {{ form.personalidade }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="ideais" class="form-label">Ideais & Motivações</label>
-                                <textarea class="form-control" id="ideais" name="ideais" rows="3" 
-                                          placeholder="O que motiva seu personagem...">{{ personagem.ideais|default:'' }}</textarea>
+                                <label for="{{ form.ideais.id_for_label }}" class="form-label">{{ form.ideais.label }}</label>
+                                {{ form.ideais }}
                             </div>
                         </div>
 
                         <!-- Habilidades e Equipamentos -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="text-secondary mb-3">
-                                    <i class="fas fa-sword me-2"></i>Habilidades & Equipamentos
-                                </h5>
+                                <h5 class="text-secondary mb-3"><i class="fas fa-sword me-2"></i>Habilidades & Equipamentos</h5>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="habilidades" class="form-label">Habilidades Especiais</label>
-                                <textarea class="form-control" id="habilidades" name="habilidades" rows="4" 
-                                          placeholder="Liste as habilidades, magias, talentos especiais...">{{ personagem.habilidades|default:'' }}</textarea>
+                                <label for="{{ form.habilidades.id_for_label }}" class="form-label">{{ form.habilidades.label }}</label>
+                                {{ form.habilidades }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="equipamentos" class="form-label">Equipamentos</label>
-                                <textarea class="form-control" id="equipamentos" name="equipamentos" rows="4" 
-                                          placeholder="Armas, armaduras, itens importantes...">{{ personagem.equipamentos|default:'' }}</textarea>
+                                <label for="{{ form.equipamentos.id_for_label }}" class="form-label">{{ form.equipamentos.label }}</label>
+                                {{ form.equipamentos }}
+                                {% if form.equipamentos.errors %}<div class="invalid-feedback d-block">{{ form.equipamentos.errors.as_text }}</div>{% endif %}
+                                <div class="form-text">{{ form.equipamentos.help_text }}</div>
                             </div>
                         </div>
 
                         <!-- Avatar -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="text-secondary mb-3">
-                                    <i class="fas fa-image me-2"></i>Avatar do Personagem
-                                </h5>
+                                <h5 class="text-secondary mb-3"><i class="fas fa-image me-2"></i>Avatar do Personagem</h5>
                             </div>
                             <div class="col-12 mb-3">
-                                <label for="avatar" class="form-label">Imagem do Personagem (Opcional)</label>
-                                <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
-                                <div class="form-text">Formatos aceitos: JPG, PNG, GIF (máx. 5MB)</div>
+                                <label for="{{ form.avatar.id_for_label }}" class="form-label">{{ form.avatar.label }}</label>
+                                {{ form.avatar }}
+                                <div class="form-text">{{ form.avatar.help_text }}</div>
                                 {% if personagem.avatar %}
                                     <div class="mt-2">
                                         <small class="text-muted">Avatar atual:</small>
@@ -197,14 +169,11 @@
                         <!-- Notas Adicionais -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h5 class="text-secondary mb-3">
-                                    <i class="fas fa-sticky-note me-2"></i>Notas Adicionais
-                                </h5>
+                                <h5 class="text-secondary mb-3"><i class="fas fa-sticky-note me-2"></i>Notas Adicionais</h5>
                             </div>
                             <div class="col-12 mb-3">
-                                <label for="notas" class="form-label">Outras Informações</label>
-                                <textarea class="form-control" id="notas" name="notas" rows="3" 
-                                          placeholder="Qualquer informação adicional sobre o personagem...">{{ personagem.notas|default:'' }}</textarea>
+                                <label for="{{ form.anotacoes_jogador.id_for_label }}" class="form-label">{{ form.anotacoes_jogador.label }}</label>
+                                {{ form.anotacoes_jogador }}
                             </div>
                         </div>
 
@@ -216,11 +185,11 @@
                                         <i class="fas fa-save me-2"></i>
                                         {% if personagem %}Salvar Alterações{% else %}Criar Personagem{% endif %}
                                     </button>
-                                    <a href="{% url 'personagens:listar' %}" class="btn btn-outline-light">
+                                    <a href="{% url 'personagens_web:listar' %}" class="btn btn-outline-light">
                                         <i class="fas fa-arrow-left me-2"></i>Voltar
                                     </a>
                                     {% if personagem %}
-                                        <button type="button" class="btn btn-danger ms-auto" onclick="confirmarExclusao()">
+                                        <button type="button" class="btn btn-danger ms-auto" data-bs-toggle="modal" data-bs-target="#modalExclusao">
                                             <i class="fas fa-trash me-2"></i>Excluir Personagem
                                         </button>
                                     {% endif %}
@@ -249,9 +218,12 @@
             </div>
             <div class="modal-footer border-secondary">
                 <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                                <a href="{% url 'personagens:deletar' personagem.id %}" class="btn btn-danger">
-                                    <i class="fas fa-trash me-2"></i>Excluir Definitivamente
-                                </a>
+                <form action="{% url 'personagens_web:deletar' personagem.pk %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Excluir Definitivamente
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -261,87 +233,36 @@
 
 {% block extra_js %}
 <script>
-    // Validação do formulário
-    document.getElementById('personagemForm').addEventListener('submit', function(e) {
-        const nome = document.getElementById('nome').value.trim();
-        const campanha = document.getElementById('campanha').value;
-        
-        if (!nome) {
-            e.preventDefault();
-            showNotification('O nome do personagem é obrigatório!', 'error');
-            document.getElementById('nome').focus();
-            return;
-        }
-        
-        if (!campanha) {
-            e.preventDefault();
-            showNotification('Selecione uma campanha!', 'error');
-            document.getElementById('campanha').focus();
-            return;
-        }
-        
-        // Mostra loading no botão de submit
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        showLoading(submitBtn);
-    });
-    
-    // Função para confirmar exclusão
-    function confirmarExclusao() {
-        new bootstrap.Modal(document.getElementById('modalExclusao')).show();
-    }
-    
-    // Preview da imagem do avatar
-    document.getElementById('avatar').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            // Verifica o tamanho do arquivo (5MB máximo)
-            if (file.size > 5 * 1024 * 1024) {
-                showNotification('A imagem deve ter no máximo 5MB!', 'error');
-                e.target.value = '';
-                return;
-            }
-            
-            // Mostra preview
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                let preview = document.getElementById('avatar-preview');
-                if (!preview) {
-                    preview = document.createElement('img');
-                    preview.id = 'avatar-preview';
-                    preview.className = 'img-thumbnail mt-2';
-                    preview.style.maxWidth = '150px';
-                    document.getElementById('avatar').parentNode.appendChild(preview);
-                }
-                preview.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-    
-    // Auto-cálculo de modificadores dos atributos
+document.addEventListener('DOMContentLoaded', function() {
     const atributos = ['forca', 'destreza', 'constituicao', 'inteligencia', 'sabedoria', 'carisma'];
+    
     atributos.forEach(attr => {
-        const input = document.getElementById(attr);
+        const input = document.getElementById('id_' + attr);
+        
         if (input) {
-            input.addEventListener('input', function() {
-                const valor = parseInt(this.value) || 10;
+            const updateModifier = () => {
+                const valor = parseInt(input.value, 10) || 10;
                 const modificador = Math.floor((valor - 10) / 2);
                 const sinal = modificador >= 0 ? '+' : '';
                 
-                // Atualiza ou cria elemento de modificador
                 let modElement = document.getElementById(attr + '-mod');
                 if (!modElement) {
-                    modElement = document.createElement('small');
+                    modElement = document.createElement('span');
                     modElement.id = attr + '-mod';
                     modElement.className = 'text-muted ms-2';
-                    this.parentNode.appendChild(modElement);
+                    // Insert the modifier element right after the input field
+                    input.parentNode.insertBefore(modElement, input.nextSibling);
                 }
                 modElement.textContent = `(${sinal}${modificador})`;
-            });
+            };
+
+            // Add event listener to update on input change
+            input.addEventListener('input', updateModifier);
             
-            // Dispara evento para mostrar modificadores iniciais
-            input.dispatchEvent(new Event('input'));
+            // Initial calculation on page load
+            updateModifier();
         }
     });
+});
 </script>
 {% endblock %}
